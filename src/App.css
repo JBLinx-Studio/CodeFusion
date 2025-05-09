@@ -17,17 +17,34 @@ body {
   overflow-x: hidden;
 }
 
-/* Remove white flash during transitions */
-.ReactCodeMirror {
+/* Remove white flash during transitions - improved selectors */
+.ReactCodeMirror,
+.cm-content, 
+.cm-gutter, 
+.cm-gutters, 
+.cm-editor, 
+.cm-scroller,
+.multi-editor-container,
+.cm-line {
   background-color: transparent !important;
   transition: none !important;
 }
 
-/* Prevent white flash during transitions */
-*, *::before, *::after {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
+/* Prevent white flash for ALL editor-related elements */
+.CodeMirror * {
+  transition: none !important;
+}
+
+/* Ensure preview iframe has proper background */
+iframe {
+  background-color: white;
+  transition: none !important;
+}
+
+/* Adjust the loading overlay to prevent white flash */
+.loading-overlay {
+  background-color: rgba(15, 17, 23, 0.7) !important;
+  backdrop-filter: blur(4px);
 }
 
 /* Remove white flash during view changes */
@@ -101,10 +118,4 @@ body {
   50% {
     opacity: 0.6;
   }
-}
-
-/* Prevent any white flash during transitions */
-.cm-content, .cm-gutter, .cm-gutters, .cm-editor, .cm-scroller {
-  transition: none !important;
-  background-color: transparent !important;
 }
