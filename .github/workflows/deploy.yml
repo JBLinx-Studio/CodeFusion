@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -12,24 +22,81 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: "14.x"
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: |
-          npm ci --ignore-scripts
+        run: npm install
 
       - name: Build Project
         run: |
           npm run build
+          # Add dynamic cache busting with commit hash and timestamp
+          VITE_CACHE_BUSTER="${{ github.sha }}_${{ github.run_number }}_$(date +%s)"
+
+      - name: Create 404.html for SPA Routing
+        run: |
+          cat > ./dist/404.html << 'EOL'
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Page Not Found</title>
+              <script type="text/javascript">
+                var pathSegmentsToKeep = 1;
+                var l = window.location;
+                l.replace(
+                  l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                  l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+                  l.pathname.split('/').slice(1 + pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+                  (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                  l.hash
+                );
+              </script>
+            </head>
+            <body>
+              <h2>Redirecting...</h2>
+            </body>
+          </html>
+          EOL
+
+      - name: Update index.html for SPA Routing and Cache Busting
+        run: |
+          sed -i '/<head>/a \
+          <!-- Cache control meta tags --> \
+          <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"> \
+          <meta http-equiv="Pragma" content="no-cache"> \
+          <meta http-equiv="Expires" content="0"> \
+          <!-- Start Single Page Apps for GitHub Pages --> \
+          <script type="text/javascript"> \
+            (function(l) { \
+              if (l.search[1] === "/" ) { \
+                var decoded = l.search.slice(1).split("&").map(function(s) { \
+                  return s.replace(/~and~/g, "&"); \
+                }).join("?"); \
+                window.history.replaceState(null, null, \
+                    l.pathname.slice(0, -1) + decoded + l.hash \
+                ); \
+              } \
+            }(window.location)) \
+          </script> \
+          <!-- End Single Page Apps for GitHub Pages -->' ./dist/index.html
+
+      - name: Create .nojekyll File to Disable Jekyll Processing
+        run: touch ./dist/.nojekyll
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
-          cname: your-custom-domain.com # Optional: If you have a custom domain
+          folder: dist
+          branch: gh-pages
+          clean: true
+          clean-exclude: .nojekyll
+          force: true
+          commit-message: "Deploy website to GitHub Pages [skip ci]"
