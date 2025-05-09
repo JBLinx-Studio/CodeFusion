@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 interface EditorSettings {
   fontSize: string;
@@ -42,24 +43,42 @@ const SettingsContext = createContext<SettingsContextProps | undefined>(undefine
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
-
-  // Load settings from localStorage
+  const { authState } = useAuth();
+  
+  // Load settings from localStorage, considering the user
   useEffect(() => {
-    const savedSettings = localStorage.getItem('codeplayground-settings');
-    
-    if (savedSettings) {
+    const loadSettings = () => {
       try {
-        setSettings(JSON.parse(savedSettings));
+        // If user is logged in, we use their personal settings key
+        const storageKey = authState.user 
+          ? `codeplayground-settings-${authState.user.id}` 
+          : 'codeplayground-settings';
+        
+        const savedSettings = localStorage.getItem(storageKey);
+        
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        }
       } catch (e) {
         console.error('Failed to load settings:', e);
       }
-    }
-  }, []);
+    };
+    
+    loadSettings();
+  }, [authState.user]);
 
-  // Save to localStorage when settings change
+  // Save to localStorage when settings change, considering the user
   useEffect(() => {
-    localStorage.setItem('codeplayground-settings', JSON.stringify(settings));
-  }, [settings]);
+    // Skip initial save on component mount
+    if (settings === defaultSettings) return;
+    
+    // If user is logged in, we use their personal settings key
+    const storageKey = authState.user 
+      ? `codeplayground-settings-${authState.user.id}` 
+      : 'codeplayground-settings';
+    
+    localStorage.setItem(storageKey, JSON.stringify(settings));
+  }, [settings, authState.user]);
 
   const updateSettings = (newSettings: Partial<EditorSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
