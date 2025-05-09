@@ -9,7 +9,6 @@ import { MobileControls } from "@/components/MobileControls";
 import { EditorContainer } from "@/components/EditorContainer";
 import { StatusBar } from "@/components/StatusBar";
 import { Toaster } from "sonner";
-import { toast } from "sonner";
 
 const Index = () => {
   // Show welcome toast when the app loads
@@ -70,9 +69,11 @@ const Index = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <span>CodePlayground © {new Date().getFullYear()}</span>
+              <span>CodeFusion © {new Date().getFullYear()}</span>
               <span className="inline-block w-1 h-1 rounded-full bg-[#4b5563]"></span>
               <span className="bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent font-medium">Build amazing fullstack web experiences</span>
+              <span className="inline-block w-1 h-1 rounded-full bg-[#4b5563]"></span>
+              <span>Made by JBLinx Studio</span>
             </motion.footer>
             
             <Toaster 
