@@ -4,14 +4,14 @@ import { motion } from 'framer-motion';
 
 interface EnhancedTooltipProps {
   children: React.ReactNode;
-  tooltip: string;
+  content: string;
   position?: 'top' | 'right' | 'bottom' | 'left';
   className?: string;
 }
 
 export const EnhancedTooltip: React.FC<EnhancedTooltipProps> = ({
   children,
-  tooltip,
+  content,
   position = 'top',
   className = '',
 }) => {
@@ -49,7 +49,7 @@ export const EnhancedTooltip: React.FC<EnhancedTooltipProps> = ({
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2 }}
         >
-          {tooltip}
+          {content}
           <div 
             className={`absolute w-2 h-2 bg-[#1a1f2c]/95 border-[#374151]/70 transform rotate-45 
               ${position === 'top' ? 'bottom-[-4px] border-b border-r left-1/2 ml-[-4px]' : ''}

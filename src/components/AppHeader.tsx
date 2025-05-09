@@ -9,8 +9,17 @@ import { UserSection } from "./Auth";
 import { useSettings } from "@/contexts/SettingsContext";
 
 export const AppHeader = () => {
-  const { toggleFileExplorer, toggleSettings } = useLayout();
+  const { showFileExplorer, setShowFileExplorer, showSettings, setShowSettings } = useLayout();
   const { userAuth } = useSettings();
+  
+  // Functions to toggle file explorer and settings
+  const toggleFileExplorer = () => {
+    setShowFileExplorer(!showFileExplorer);
+  };
+  
+  const toggleSettings = () => {
+    setShowSettings(!showSettings);
+  };
   
   return (
     <header className="border-b border-[#1e293b] flex justify-between items-center p-2 backdrop-blur-lg bg-[#0a101f]/50">
