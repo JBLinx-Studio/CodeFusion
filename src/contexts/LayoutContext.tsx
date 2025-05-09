@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 
@@ -18,10 +17,6 @@ interface LayoutContextProps {
   dockedFiles: string[];
   toggleDockedFile: (fileName: string) => void;
   isFileDocked: (fileName: string) => boolean;
-  showFileExplorer: boolean;
-  setShowFileExplorer: (show: boolean) => void;
-  showSettings: boolean;
-  setShowSettings: (show: boolean) => void;
 }
 
 const LayoutContext = createContext<LayoutContextProps | undefined>(undefined);
@@ -34,8 +29,6 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [dockedFiles, setDockedFiles] = useState<string[]>([]);
-  const [showFileExplorer, setShowFileExplorer] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -47,12 +40,10 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       localStorage.setItem('codePlayground_view', view);
       localStorage.setItem('codePlayground_panelWidth', panelWidth.toString());
       localStorage.setItem('codePlayground_dockedFiles', JSON.stringify(dockedFiles));
-      localStorage.setItem('codePlayground_showFileExplorer', showFileExplorer.toString());
-      localStorage.setItem('codePlayground_showSettings', showSettings.toString());
     } catch (e) {
       console.error("Could not save layout preferences:", e);
     }
-  }, [view, panelWidth, dockedFiles, showFileExplorer, showSettings]);
+  }, [view, panelWidth, dockedFiles]);
 
   // Load user preferences from localStorage
   useEffect(() => {
@@ -60,8 +51,6 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const savedView = localStorage.getItem('codePlayground_view') as 'split' | 'editor' | 'preview' | null;
       const savedWidth = localStorage.getItem('codePlayground_panelWidth');
       const savedDockedFiles = localStorage.getItem('codePlayground_dockedFiles');
-      const savedShowFileExplorer = localStorage.getItem('codePlayground_showFileExplorer');
-      const savedShowSettings = localStorage.getItem('codePlayground_showSettings');
       
       if (savedView && ['split', 'editor', 'preview'].includes(savedView)) {
         setView(savedView);
@@ -73,14 +62,6 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       if (savedDockedFiles) {
         setDockedFiles(JSON.parse(savedDockedFiles));
-      }
-
-      if (savedShowFileExplorer) {
-        setShowFileExplorer(savedShowFileExplorer === 'true');
-      }
-
-      if (savedShowSettings) {
-        setShowSettings(savedShowSettings === 'true');
       }
     } catch (e) {
       console.error("Could not load layout preferences:", e);
@@ -274,10 +255,6 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         dockedFiles,
         toggleDockedFile,
         isFileDocked,
-        showFileExplorer,
-        setShowFileExplorer,
-        showSettings,
-        setShowSettings,
       }}
     >
       {React.cloneElement(children as React.ReactElement, { ref: setContainerRef })}
