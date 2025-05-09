@@ -11,31 +11,25 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Clear npm Cache
-        run: npm cache clean --force
-
-      - name: Update npm
-        run: npm install -g npm@latest
+        uses: actions/checkout@v2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v2
         with:
           node-version: 14
 
       - name: Install Dependencies
         run: |
-          rm -rf node_modules
-          npm install
           npm ci --ignore-scripts
 
       - name: Build Project
-        run: npm run build
+        run: |
+          npm run build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          publish_branch: gh-pages
           cname: your-custom-domain.com # Optional: If you have a custom domain
