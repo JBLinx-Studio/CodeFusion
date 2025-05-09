@@ -8,14 +8,14 @@ import { AppHeader } from "@/components/AppHeader";
 import { MobileControls } from "@/components/MobileControls";
 import { EditorContainer } from "@/components/EditorContainer";
 import { StatusBar } from "@/components/StatusBar";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 
 const Index = () => {
   // Show welcome toast when the app loads
   useEffect(() => {
     const timer = setTimeout(() => {
       toast.success(
-        "Welcome to CodePlayground",
+        "Welcome to CodeFusion",
         {
           description: "Build amazing web experiences with fullstack capabilities",
           duration: 5000,
