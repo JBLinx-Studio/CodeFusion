@@ -17,7 +17,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Remove white flash during transitions - improved selectors */
+/* Remove white flash and blur during transitions - improved selectors */
 .ReactCodeMirror,
 .cm-content, 
 .cm-gutter, 
@@ -28,11 +28,13 @@ body {
 .cm-line {
   background-color: transparent !important;
   transition: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Prevent white flash for ALL editor-related elements */
 .CodeMirror * {
   transition: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Ensure preview iframe has proper background */
@@ -41,10 +43,10 @@ iframe {
   transition: none !important;
 }
 
-/* Adjust the loading overlay to prevent white flash */
+/* Adjust the loading overlay to prevent white flash and remove blur */
 .loading-overlay {
   background-color: rgba(15, 17, 23, 0.7) !important;
-  backdrop-filter: blur(4px);
+  backdrop-filter: none !important;
 }
 
 /* Remove white flash during view changes */
@@ -84,10 +86,9 @@ iframe {
   margin: 0 2px;
 }
 
-/* Glassmorphism effects */
+/* Glassmorphism effects - removed blur */
 .glassmorphism {
   background: rgba(26, 31, 44, 0.7);
-  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }

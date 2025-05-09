@@ -11,6 +11,10 @@ interface EditorSettings {
   wordWrap: boolean;
   highlightActiveLine: boolean;
   keymap: string;
+  autosave: boolean;
+  formatOnSave: boolean;
+  liveCollaboration: boolean;
+  syntaxHighlighting: string;
 }
 
 interface SettingsContextProps {
@@ -27,7 +31,11 @@ const defaultSettings: EditorSettings = {
   autoCloseBrackets: true,
   wordWrap: false,
   highlightActiveLine: true,
-  keymap: 'default'
+  keymap: 'default',
+  autosave: true,
+  formatOnSave: false,
+  liveCollaboration: false,
+  syntaxHighlighting: 'default'
 };
 
 const SettingsContext = createContext<SettingsContextProps | undefined>(undefined);

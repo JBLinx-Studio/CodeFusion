@@ -190,10 +190,10 @@ export const PreviewPanel = ({
     iframeDocument.write(combinedOutput);
     iframeDocument.close();
     
-    // Handle the loading state
+    // Handle the loading state - reduced time to minimize flicker
     setTimeout(() => {
       setIsLoading(false);
-    }, 500);
+    }, 200);
   };
   
   // Check if code has changed and needs update
@@ -209,7 +209,7 @@ export const PreviewPanel = ({
         updatePreview();
         setConsoleOutput([]); // Clear console on code change
       } else {
-        // Mark that manual update is needed
+        // Mark that manual update is needed without automatically updating
         setNeedsManualUpdate(true);
       }
     }
@@ -363,14 +363,14 @@ export const PreviewPanel = ({
             className={`h-7 w-7 p-0 ${needsManualUpdate ? 'bg-amber-600 text-white hover:bg-amber-700' : 'text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#242a38]'}`}
             title="Refresh Preview"
           >
-            <RefreshCw size={14} className={needsManualUpdate ? "animate-spin" : ""} />
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
           </Button>
         </div>
       </div>
       <div className="flex-1 bg-white overflow-auto flex flex-col">
         <div className={`flex-1 ${viewportSize !== 'desktop' ? 'flex justify-center bg-[#f0f0f0]' : ''}`}>
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center loading-overlay z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0f1117]/70 z-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366f1]"></div>
             </div>
           )}
