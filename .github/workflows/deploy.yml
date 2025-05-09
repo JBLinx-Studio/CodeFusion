@@ -13,13 +13,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Clear npm Cache
+        run: npm cache clean --force
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 14 # Adjust node version as per your project requirements
+          node-version: 14
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          rm -rf node_modules
+          npm install
+          npm ci --ignore-scripts
 
       - name: Build Project
         run: npm run build
@@ -30,4 +39,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           cname: your-custom-domain.com # Optional: If you have a custom domain
-
