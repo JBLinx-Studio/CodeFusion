@@ -1,73 +1,45 @@
-# Welcome to your Lovable project
 
-## Project info
+# CodePlay
 
-**URL**: https://lovable.dev/projects/8f72242e-7ccb-40c2-b950-20f511ac35e9
+A minimal deployment-ready application configured with GitHub Actions.
 
-## How can I edit this code?
+## Deployment
 
-There are several ways of editing your application.
+This project is configured to automatically deploy to GitHub Pages when changes are pushed to the main branch. The deployment workflow is defined in `.github/workflows/deploy.yml`.
 
-**Use Lovable**
+### How It Works
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8f72242e-7ccb-40c2-b950-20f511ac35e9) and start prompting.
+1. When code is pushed to the main branch, GitHub Actions will automatically:
+   - Set up a Node.js environment
+   - Install dependencies
+   - Build the application
+   - Deploy the built files to GitHub Pages
 
-Changes made via Lovable will be committed automatically to this repo.
+### Manual Deployment
 
-**Use your preferred IDE**
+You can also trigger a manual deployment by:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Going to the "Actions" tab in your GitHub repository
+2. Selecting the "Deploy CodePlay" workflow
+3. Clicking "Run workflow"
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Customizing Deployment
 
-Follow these steps:
+To deploy to a different platform:
+
+1. Edit the `.github/workflows/deploy.yml` file
+2. Modify the deployment step to use your preferred hosting provider
+3. Add any necessary secrets in your GitHub repository settings
+
+## Local Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/8f72242e-7ccb-40c2-b950-20f511ac35e9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
