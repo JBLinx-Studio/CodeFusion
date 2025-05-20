@@ -23,7 +23,8 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     components: 'buttons,funding-eligibility',
     'enable-funding': 'paypal',
     'disable-funding': 'paylater,card',
-    dataClientToken: null,
+    vault: true,
+    'data-namespace': 'CodeFusionPayPal',
   };
 
   return (
