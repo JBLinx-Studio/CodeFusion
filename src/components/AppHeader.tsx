@@ -3,17 +3,15 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from '@/components/auth/UserMenu';
 import { Button } from '@/components/ui/button';
-import { LogIn, Menu, Sparkles, Code } from 'lucide-react';
+import { LogIn, Menu } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { Link } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useLayout } from '@/contexts/LayoutContext';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 export const AppHeader: React.FC = () => {
   const { authState } = useAuth();
-  const { setShowAiAssistant, showAiAssistant } = useLayout();
   const [showAuthModal, setShowAuthModal] = React.useState(false);
-  const isMobile = useIsMobile();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   
   return (
@@ -35,19 +33,6 @@ export const AppHeader: React.FC = () => {
           <a href="#pricing" className="text-[#9ca3af] hover:text-white transition-colors">Pricing</a>
         </nav>
       )}
-      
-      {/* AI Assistant button */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className={`border-[#4b5563] ${showAiAssistant ? 'bg-[#2d3748] text-[#6366f1]' : 'text-[#9ca3af]'} hover:bg-[#2d3748] hover:text-white`}
-          onClick={() => setShowAiAssistant(!showAiAssistant)}
-        >
-          <Sparkles className={`h-4 w-4 mr-1 ${showAiAssistant ? 'text-[#6366f1]' : ''}`} />
-          AI Assistant
-        </Button>
-      </div>
       
       {/* User menu or Login button */}
       <div className="flex items-center gap-4">

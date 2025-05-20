@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Check, CreditCard } from 'lucide-react';
 import { usePayPalError } from '../paypal/usePayPalError';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 interface PaymentMethodDialogProps {
   open: boolean;
@@ -31,6 +30,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 }) => {
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [isLoading, setIsLoading] = useState(false);
+  const [paypalInitialized, setPaypalInitialized] = useState(false);
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
   const [{ isResolved, isPending }] = usePayPalScriptReducer();
@@ -58,21 +58,19 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
     try {
       console.log('Creating subscription for plan:', selectedTier);
-      setIsLoading(true);
+      setPaypalInitialized(true);
       
-      // For sandbox testing, use these hardcoded plan IDs
       return actions.subscription.create({
         plan_id: selectedTier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
         application_context: {
           shipping_preference: 'NO_SHIPPING',
-          user_action: 'SUBSCRIBE_NOW',
-          return_url: window.location.href,
-          cancel_url: window.location.href
+          user_action: 'SUBSCRIBE_NOW'
         }
       });
     } catch (error) {
       console.error('Failed to create subscription:', error);
       handlePayPalError(error);
+      setPaypalInitialized(false);
       setIsLoading(false);
       return null;
     }
@@ -114,6 +112,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       handlePayPalError(error);
     } finally {
       setIsLoading(false);
+      setPaypalInitialized(false);
     }
   };
 
@@ -121,11 +120,13 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     console.error('PayPal error:', error);
     handlePayPalError(error);
     setIsLoading(false);
+    setPaypalInitialized(false);
   };
 
   const handleCancel = () => {
     toast.info('Subscription process was canceled');
     setIsLoading(false);
+    setPaypalInitialized(false);
   };
 
   // If no tier is selected, don't show the dialog
@@ -205,7 +206,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   </div>
                 ) : (
                   <div className="w-full overflow-hidden rounded-md">
-                    {isResolved ? (
+                    {isResolved && (
                       <PayPalButtons
                         style={{ 
                           layout: 'vertical',
@@ -218,9 +219,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                         onApprove={handleApprove}
                         onError={handleError}
                         onCancel={handleCancel}
-                        forceReRender={[selectedTier]}
                       />
-                    ) : (
+                    )}
+                    {isPending && (
                       <div className="w-full py-3 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
                         <div className="w-4 h-4 border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
                         <span>Loading PayPal...</span>

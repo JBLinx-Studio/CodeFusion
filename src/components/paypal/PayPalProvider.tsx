@@ -17,18 +17,23 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
-    intent: 'capture',  // Changed from 'subscription' to 'capture' for more general use
+    intent: 'subscription',
     vault: true,
-    components: 'buttons,funding-eligibility',
-    'data-client-token': 'abc123', // Added client token
-    'disable-funding': 'credit',
+    components: 'buttons',
+    'disable-funding': 'credit,card',
     'enable-funding': 'paypal',
-    'data-sdk-integration-source': 'button-factory',
     'data-namespace': 'paypal_sdk',
   };
 
   return (
-    <PayPalScriptProvider options={paypalOptions}>
+    <PayPalScriptProvider 
+      options={paypalOptions} 
+      deferLoading={false}
+      onError={(err) => {
+        console.error('PayPal script error:', err);
+        handlePayPalError(err);
+      }}
+    >
       {children}
     </PayPalScriptProvider>
   );
