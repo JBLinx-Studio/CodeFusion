@@ -5,6 +5,7 @@ import { AuthModal } from './AuthModal';
 import { Button } from '@/components/ui/button';
 import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface PremiumFeaturesProps {
   feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess';
@@ -19,6 +20,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
 }) => {
   const { authState } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const navigate = useNavigate();
   
   const tierLevel = (tier: string): number => {
     switch(tier) {
@@ -52,9 +54,9 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
     toast.info(`Upgrade to ${requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)}`, {
       description: `This feature requires a ${requiredTier} subscription.`,
       action: {
-        label: 'Upgrade',
+        label: 'Go to Dashboard',
         onClick: () => {
-          toast('Upgrade feature coming soon!');
+          navigate('/dashboard');
         }
       }
     });

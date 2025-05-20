@@ -14,11 +14,13 @@ import { AuthModal } from './AuthModal';
 import { User, LogOut, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { UserTier } from '@/contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const UserMenu: React.FC = () => {
   const { authState, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalView, setAuthModalView] = useState<'login' | 'register'>('login');
+  const navigate = useNavigate();
   
   const handleLoginClick = () => {
     setAuthModalView('login');
@@ -85,7 +87,14 @@ export const UserMenu: React.FC = () => {
             <DropdownMenuSeparator className="bg-[#2d3748]" />
             <DropdownMenuItem 
               className="cursor-pointer hover:bg-[#2d3748] focus:bg-[#2d3748]"
-              onClick={() => {}}
+              onClick={() => navigate('/dashboard')}
+            >
+              <User className="mr-2 h-4 w-4" />
+              Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer hover:bg-[#2d3748] focus:bg-[#2d3748]"
+              onClick={() => navigate('/dashboard')}
             >
               <Settings className="mr-2 h-4 w-4" />
               Account Settings
