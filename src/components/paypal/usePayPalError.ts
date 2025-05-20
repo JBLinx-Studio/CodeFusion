@@ -20,11 +20,12 @@ export const usePayPalError = () => {
     } else if (typeof error === 'string') {
       message = error;
     } else {
-      message = 'An error occurred with the payment system';
+      message = 'An error occurred with the payment system. Please try again later.';
     }
     
     setIsError(true);
     setErrorMessage(message);
+    
     toast.error('Payment error', {
       description: message.length > 100 ? message.substring(0, 100) + '...' : message,
     });

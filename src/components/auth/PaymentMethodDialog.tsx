@@ -30,6 +30,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 }) => {
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [isLoading, setIsLoading] = useState(false);
+  const [paypalInitialized, setPaypalInitialized] = useState(false);
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
@@ -46,15 +47,19 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     
     try {
       console.log('Creating subscription for plan:', selectedTier);
+      setPaypalInitialized(true);
+      
       return actions.subscription.create({
         plan_id: selectedTier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
         application_context: {
-          shipping_preference: 'NO_SHIPPING'
+          shipping_preference: 'NO_SHIPPING',
+          user_action: 'CONTINUE' // Ensures PayPal shows the checkout page
         }
       });
     } catch (error) {
       console.error('Failed to create subscription:', error);
       handlePayPalError(error);
+      setIsLoading(false);
       return null;
     }
   };
@@ -95,17 +100,21 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       handlePayPalError(error);
     } finally {
       setIsLoading(false);
+      setPaypalInitialized(false);
     }
   };
 
   const handleError = (error: any) => {
+    console.error('PayPal error:', error);
     handlePayPalError(error);
     setIsLoading(false);
+    setPaypalInitialized(false);
   };
 
   const handleCancel = () => {
-    toast.info('Subscription canceled');
+    toast.info('Subscription process was canceled');
     setIsLoading(false);
+    setPaypalInitialized(false);
   };
 
   // If no tier is selected, don't show the dialog
@@ -175,7 +184,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             {paymentMethod === 'paypal' ? (
               <div className="space-y-4">
                 <p className="text-sm text-[#9ca3af]">
-                  You'll be redirected to PayPal to complete your subscription.
+                  Click the PayPal button below to complete your {selectedTier} subscription.
                 </p>
                 
                 {isLoading ? (
@@ -184,19 +193,22 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     <span>Processing...</span>
                   </div>
                 ) : (
-                  <PayPalButtons
-                    style={{ 
-                      layout: 'vertical',
-                      color: 'blue',
-                      shape: 'rect',
-                      label: 'subscribe',
-                      height: 40
-                    }}
-                    createSubscription={handleCreateSubscription}
-                    onApprove={handleApprove}
-                    onError={handleError}
-                    onCancel={handleCancel}
-                  />
+                  <div className="w-full overflow-hidden rounded-md">
+                    <PayPalButtons
+                      style={{ 
+                        layout: 'vertical',
+                        color: 'blue',
+                        shape: 'rect',
+                        label: 'subscribe',
+                        height: 45
+                      }}
+                      fundingSource="paypal"
+                      createSubscription={handleCreateSubscription}
+                      onApprove={handleApprove}
+                      onError={handleError}
+                      onCancel={handleCancel}
+                    />
+                  </div>
                 )}
                 
                 <div className="text-xs text-[#9ca3af] text-center">
