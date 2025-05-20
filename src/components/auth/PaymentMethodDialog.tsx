@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { PayPalButtons } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Check, CreditCard } from 'lucide-react';
+import { usePayPalError } from '../paypal/usePayPalError';
 
 interface PaymentMethodDialogProps {
   open: boolean;
@@ -30,13 +31,15 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [isLoading, setIsLoading] = useState(false);
   const { updateUserProfile } = useAuth();
+  const { handlePayPalError, resetError } = usePayPalError();
 
   // Reset state when dialog opens or closes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       setIsLoading(false);
+      resetError();
     }
-  }, [open]);
+  }, [open, resetError]);
 
   const handleCreateSubscription = (data: any, actions: any) => {
     if (!selectedTier) return null;
@@ -51,7 +54,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       });
     } catch (error) {
       console.error('Failed to create subscription:', error);
-      toast.error('Failed to create subscription');
+      handlePayPalError(error);
       return null;
     }
   };
@@ -89,15 +92,14 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       onSuccess();
     } catch (error) {
       console.error('Error processing subscription:', error);
-      toast.error('Failed to process subscription');
+      handlePayPalError(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleError = (error: any) => {
-    console.error('PayPal error:', error);
-    toast.error('PayPal encountered an error');
+    handlePayPalError(error);
     setIsLoading(false);
   };
 

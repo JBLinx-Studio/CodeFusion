@@ -44,7 +44,7 @@ export const UserSubscriptionInfo: React.FC = () => {
         'Team Collaboration',
       ],
       buttonText: currentTier === 'premium' ? 'Current Plan' : 
-                  currentTier === 'pro' ? 'Downgrade' : 'Upgrade Plan',
+                 currentTier === 'pro' ? 'Downgrade' : 'Upgrade Plan',
       highlighted: true,
       disabled: currentTier === 'premium',
       tier: 'premium',
@@ -118,7 +118,7 @@ export const UserSubscriptionInfo: React.FC = () => {
                   currentTier === plan.tier.toLowerCase() 
                     ? 'ring-2 ring-[#6366f1]' 
                     : ''
-                } overflow-hidden`}
+                } overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
               >
                 <div className={`p-5 ${
                   plan.highlighted ? 'bg-gradient-to-r from-[#4f46e5]/20 to-[#6366f1]/20' : ''
@@ -147,7 +147,7 @@ export const UserSubscriptionInfo: React.FC = () => {
                           ? 'bg-[#2d3748] text-[#9ca3af] cursor-not-allowed' 
                           : plan.tier === 'free'
                             ? 'bg-[#374151] hover:bg-[#4b5563] text-white'
-                            : 'bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white'
+                            : 'bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white shadow-md transform transition-all hover:shadow-lg'
                       }`}
                       disabled={plan.disabled}
                       onClick={() => handlePlanChange(plan.tier as 'free' | 'premium' | 'pro')}

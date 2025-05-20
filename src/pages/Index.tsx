@@ -8,7 +8,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { MobileControls } from "@/components/MobileControls";
 import { EditorContainer } from "@/components/EditorContainer";
 import { StatusBar } from "@/components/StatusBar";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 
 const Index = () => {
   // Show welcome toast when the app loads
@@ -75,17 +75,6 @@ const Index = () => {
               <span className="inline-block w-1 h-1 rounded-full bg-[#4b5563]"></span>
               <span>Made by JBLinx Studio</span>
             </motion.footer>
-            
-            <Toaster 
-              position="top-right" 
-              richColors 
-              closeButton 
-              theme="dark"
-              toastOptions={{
-                className: "backdrop-blur-md bg-[#1a1f2c]/80 border border-[#374151]/50 shadow-2xl",
-                duration: 3000,
-              }}
-            />
           </motion.div>
         </LayoutProvider>
       </FileSystemProvider>

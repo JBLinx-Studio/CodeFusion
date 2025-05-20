@@ -81,7 +81,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
           </p>
           <Button
             size="sm"
-            className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
+            className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
             onClick={handlePremiumClick}
           >
             {authState.isAuthenticated ? 'Upgrade Plan' : 'Sign In'}

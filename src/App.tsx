@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
@@ -38,7 +38,7 @@ const App = () => (
               visibleToasts={5}
               toastOptions={{
                 duration: 3000,
-                className: "bg-[#1e293b] border border-[#374151] text-white",
+                className: "bg-[#1e293b] border border-[#374151] text-white shadow-lg rounded-lg",
               }}
             />
             <HashRouter>

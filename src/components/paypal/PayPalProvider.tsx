@@ -2,6 +2,7 @@
 import React from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
+import { usePayPalError } from './usePayPalError';
 
 // PayPal client IDs for sandbox environment
 const PAYPAL_CLIENT_ID = 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH';
@@ -12,6 +13,8 @@ interface PayPalProviderProps {
 }
 
 export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
+  const { handlePayPalError } = usePayPalError();
+  
   // Configure PayPal options according to their documentation
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
@@ -21,6 +24,12 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     'enable-funding': 'paypal',
     'disable-funding': 'paylater,card',
     dataClientToken: null,
+  };
+
+  // Handle the script loading error separately from transaction errors
+  const handleScriptError = (err: any) => {
+    console.error('Failed to load PayPal script:', err);
+    handlePayPalError(err);
   };
 
   return (
