@@ -95,7 +95,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       });
       
       onSuccess();
-      onOpenChange(false); // Close the dialog after successful payment
     } catch (error) {
       console.error('Error processing subscription:', error);
       handlePayPalError(error);
