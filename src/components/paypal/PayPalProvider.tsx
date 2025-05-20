@@ -25,20 +25,19 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     'disable-funding': 'paylater,card',
     vault: true,
     'data-namespace': 'CodeFusionPayPal',
-    // We'll handle errors through the onInit and onError events
-    onError: (err: any) => {
-      console.error("PayPal script error:", err);
-      handlePayPalError(err);
-      toast.error("Failed to load payment system", {
-        description: "Please try again later or contact support."
-      });
-    }
   };
 
   return (
     <PayPalScriptProvider 
       options={paypalOptions} 
       deferLoading={false}
+      onError={(err) => {
+        console.error("PayPal script error:", err);
+        handlePayPalError(err);
+        toast.error("Failed to load payment system", {
+          description: "Please try again later or contact support."
+        });
+      }}
     >
       {children}
     </PayPalScriptProvider>
