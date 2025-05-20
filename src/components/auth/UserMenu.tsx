@@ -1,137 +1,153 @@
 
 import React, { useState } from 'react';
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, LogOut, Settings, CreditCard } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from './AuthModal';
-import { User, LogOut, Settings } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { UserTier } from '@/contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { UserDashboardDialog } from './UserDashboardDialog';
 
 export const UserMenu: React.FC = () => {
   const { authState, logout } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalView, setAuthModalView] = useState<'login' | 'register'>('login');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [authView, setAuthView] = useState<'login' | 'register'>('login');
   const navigate = useNavigate();
-  
-  const handleLoginClick = () => {
-    setAuthModalView('login');
-    setShowAuthModal(true);
+
+  const handleSignOut = () => {
+    logout();
+    toast.success("Signed out successfully");
+    navigate('/');
   };
-  
-  const handleRegisterClick = () => {
-    setAuthModalView('register');
-    setShowAuthModal(true);
-  };
-  
-  const getTierBadge = (tier: UserTier) => {
-    switch (tier) {
-      case 'free':
-        return <Badge variant="outline" className="ml-2 text-xs">Free</Badge>;
-      case 'premium':
-        return (
-          <Badge variant="outline" className="ml-2 bg-gradient-to-r from-[#9333ea] to-[#4f46e5] text-white text-xs">
-            Premium
-          </Badge>
-        );
-      case 'pro':
-        return (
-          <Badge variant="outline" className="ml-2 bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white text-xs">
-            Pro
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-  
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+
+  if (authState.isLoading) {
+    return (
+      <Button variant="ghost" size="sm" className="bg-[#2d3748]/30 h-8 w-8 rounded-full p-0">
+        <span className="animate-pulse h-4 w-4 rounded-full bg-gray-500/50"></span>
+      </Button>
+    );
+  }
+
+  if (!authState.isAuthenticated) {
+    return (
+      <>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="text-[#9ca3af] hover:text-white hover:bg-[#2d3748] flex items-center gap-1 h-8"
+          onClick={() => {
+            setAuthView('login');
+            setAuthModalOpen(true);
+          }}
+        >
+          <User size={16} />
+          <span className="hidden md:inline text-xs">Sign In</span>
+        </Button>
+
+        <AuthModal 
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)} 
+          defaultView={authView}
+        />
+      </>
+    );
+  }
 
   return (
     <>
-      {authState.isAuthenticated ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={authState.user?.avatar} alt={authState.user?.name} />
-                <AvatarFallback className="bg-gradient-to-br from-[#4f46e5] to-[#6366f1] text-white">
-                  {getInitials(authState.user?.name || 'User')}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-[#1a1f2c] border border-[#2d3748] text-white" align="end" forceMount>
-            <div className="flex items-center justify-start gap-2 p-2">
-              <div className="flex flex-col space-y-0.5 leading-none">
-                <p className="font-medium text-sm">{authState.user?.name}</p>
-                <p className="text-xs text-[#9ca3af] w-[170px] truncate">{authState.user?.email}</p>
-              </div>
-              {getTierBadge(authState.user?.tier || 'free')}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 hover:bg-[#2d3748]" size="sm">
+            <Avatar className="h-8 w-8 border border-[#4b5563]">
+              <AvatarImage 
+                src={authState.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authState.user?.name || "User")}&background=374151&color=fff`}
+                alt={authState.user?.name || "User avatar"} 
+              />
+              <AvatarFallback className="bg-[#374151] text-xs">
+                {authState.user?.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-[#1a1f2c]"></span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 bg-[#1a1f2c] border-[#2d3748] text-white shadow-xl">
+          <DropdownMenuLabel>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium text-gray-100">{authState.user?.name || "User"}</p>
+              <p className="text-xs text-gray-400 truncate">{authState.user?.email}</p>
             </div>
-            <DropdownMenuSeparator className="bg-[#2d3748]" />
-            <DropdownMenuItem 
-              className="cursor-pointer hover:bg-[#2d3748] focus:bg-[#2d3748]"
-              onClick={() => navigate('/dashboard')}
-            >
-              <User className="mr-2 h-4 w-4" />
-              Dashboard
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="cursor-pointer hover:bg-[#2d3748] focus:bg-[#2d3748]"
-              onClick={() => navigate('/dashboard')}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Account Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[#2d3748]" />
-            <DropdownMenuItem 
-              className="cursor-pointer text-[#f87171] hover:text-[#ef4444] hover:bg-[#2d3748] focus:bg-[#2d3748]"
-              onClick={logout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748]"
-            onClick={handleLoginClick}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-[#2d3748]" />
+          <DropdownMenuItem
+            className="flex items-center text-xs cursor-pointer hover:bg-[#2d3748]"
+            onClick={() => setDashboardOpen(true)}
           >
-            Log in
-          </Button>
-          <Button 
-            className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
-            onClick={handleRegisterClick}
+            <User size={14} className="mr-2 text-gray-400" />
+            Account Dashboard
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center text-xs cursor-pointer hover:bg-[#2d3748]"
+            onClick={() => {
+              setDashboardOpen(true);
+              // This will be handled by the dashboard component
+              // We'll select the subscription tab after it opens
+              setTimeout(() => {
+                const subscriptionTabButton = document.querySelector('[data-tab="subscription"]') as HTMLButtonElement;
+                if (subscriptionTabButton) {
+                  subscriptionTabButton.click();
+                }
+              }, 100);
+            }}
           >
-            <User className="mr-2 h-4 w-4" />
-            Sign up
-          </Button>
-        </div>
-      )}
-      
+            <CreditCard size={14} className="mr-2 text-gray-400" />
+            Subscription
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center text-xs cursor-pointer hover:bg-[#2d3748]"
+            onClick={() => {
+              setDashboardOpen(true);
+              // Select settings tab
+              setTimeout(() => {
+                const settingsTabButton = document.querySelector('[data-tab="settings"]') as HTMLButtonElement;
+                if (settingsTabButton) {
+                  settingsTabButton.click();
+                }
+              }, 100);
+            }}
+          >
+            <Settings size={14} className="mr-2 text-gray-400" />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-[#2d3748]" />
+          <DropdownMenuItem 
+            className="flex items-center text-xs cursor-pointer hover:bg-red-900/30 text-red-400 hover:text-red-300"
+            onClick={handleSignOut}
+          >
+            <LogOut size={14} className="mr-2" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <UserDashboardDialog 
+        open={dashboardOpen}
+        onOpenChange={setDashboardOpen}
+      />
+
       <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-        defaultView={authModalView}
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)} 
+        defaultView={authView}
       />
     </>
   );

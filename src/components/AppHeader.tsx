@@ -61,7 +61,7 @@ export const AppHeader: React.FC = () => {
   return (
     <>
       <motion.header 
-        className="bg-gradient-to-r from-[#0f1117] to-[#1a1f2c] border-b border-[#2d3748] px-4 py-3 flex justify-between items-center shadow-md"
+        className="bg-gradient-to-r from-[#0f1117] to-[#1a1f2c] border-b border-[#2d3748] px-4 py-2 flex justify-between items-center shadow-md"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -116,44 +116,47 @@ export const AppHeader: React.FC = () => {
           </motion.div>
         </div>
         
-        <div className="flex gap-1 md:gap-2 items-center">
-          <EnhancedTooltip tooltip="Copy code">
+        <div className="flex gap-1 md:gap-1 items-center">
+          <EnhancedTooltip tooltip="Copy code" position="bottom">
             <Button 
               variant="ghost" 
               onClick={handleCopyCode}
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden"
+              size="sm"
+              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden h-8"
             >
               <Copy size={16} />
-              <span className="hidden lg:inline">Copy</span>
+              <span className="hidden lg:inline text-xs">Copy</span>
             </Button>
           </EnhancedTooltip>
           
-          <EnhancedTooltip tooltip="Download code">
+          <EnhancedTooltip tooltip="Download code" position="bottom">
             <Button 
               variant="ghost" 
               onClick={handleDownloadCode}
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden"
+              size="sm"
+              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden h-8"
             >
               <Download size={16} />
-              <span className="hidden lg:inline">Download</span>
+              <span className="hidden lg:inline text-xs">Download</span>
             </Button>
           </EnhancedTooltip>
           
-          <EnhancedTooltip tooltip="AI Assistant">
+          <EnhancedTooltip tooltip="AI Assistant" position="bottom">
             <Button 
               variant="ghost" 
               onClick={() => setShowAiAssistant(!showAiAssistant)}
-              className={`text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] items-center gap-1 ${showAiAssistant ? 'bg-[#1e293b]/80 text-[#6366f1]' : ''}`}
+              size="sm"
+              className={`text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] items-center gap-1 h-8 ${showAiAssistant ? 'bg-[#1e293b]/80 text-[#6366f1]' : ''}`}
             >
               <Sparkles size={16} className={`${showAiAssistant ? 'animate-pulse' : ''}`} />
-              <span className="hidden lg:inline">AI</span>
+              <span className="hidden lg:inline text-xs">AI</span>
             </Button>
           </EnhancedTooltip>
           
           <GitHubIntegration files={{}} />
           
           {!isMobile ? (
-            <EnhancedTooltip tooltip="Settings">
+            <EnhancedTooltip tooltip="Settings" position="bottom">
               <AdvancedSettings 
                 settings={settings}
                 onUpdateSettings={updateSettings}
@@ -164,7 +167,8 @@ export const AppHeader: React.FC = () => {
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748]"
+                  size="sm"
+                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] h-8"
                 >
                   <Settings size={16} />
                 </Button>
@@ -178,33 +182,36 @@ export const AppHeader: React.FC = () => {
             </Sheet>
           )}
           
-          <EnhancedTooltip tooltip="Reset to defaults">
+          <EnhancedTooltip tooltip="Reset to defaults" position="bottom">
             <Button 
               variant="ghost" 
               onClick={resetToDefaults}
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 transition-all duration-200 hover:rotate-180"
+              size="sm"
+              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 h-8"
             >
               <RefreshCw size={16} />
-              <span className="hidden md:inline">Reset</span>
+              <span className="hidden md:inline text-xs">Reset</span>
             </Button>
           </EnhancedTooltip>
           
-          <EnhancedTooltip tooltip="Clear all">
+          <EnhancedTooltip tooltip="Clear all" position="bottom">
             <Button 
               variant="ghost" 
               onClick={clearAll}
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 transition-colors"
+              size="sm"
+              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 h-8"
             >
               <Trash2 size={16} />
-              <span className="hidden md:inline">Clear</span>
+              <span className="hidden md:inline text-xs">Clear</span>
             </Button>
           </EnhancedTooltip>
           
-          <EnhancedTooltip tooltip={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+          <EnhancedTooltip tooltip={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"} position="bottom">
             <Button 
               variant="ghost" 
               onClick={toggleFullscreen}
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] transition-transform hover:scale-110"
+              size="sm"
+              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] h-8"
             >
               {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </Button>
@@ -217,7 +224,8 @@ export const AppHeader: React.FC = () => {
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:hidden"
+                  size="sm"
+                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:hidden h-8"
                 >
                   <Menu size={16} />
                 </Button>
