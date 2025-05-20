@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 export const UserDashboard: React.FC = () => {
-  const { authState, signOut } = useAuth();
+  const { authState, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
   const navigate = useNavigate();
 
@@ -43,7 +43,7 @@ export const UserDashboard: React.FC = () => {
   const projectsLimit = authState.user.tier === 'free' ? 5 : authState.user.tier === 'premium' ? 15 : 50;
 
   const handleSignOut = () => {
-    signOut();
+    logout();
     toast.success("Signed out successfully");
     navigate('/');
   };
@@ -56,12 +56,12 @@ export const UserDashboard: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex flex-col items-center py-6">
               <Avatar className="w-24 h-24 border-2 border-[#6366f1] p-1">
-                <AvatarImage src={authState.user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(authState.user.displayName || 'User')}`} />
+                <AvatarImage src={authState.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authState.user?.name || 'User')}`} />
                 <AvatarFallback className="bg-[#2d3748] text-[#9ca3af] text-lg">
-                  {authState.user.displayName?.[0] || 'U'}
+                  {authState.user?.name?.[0] || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="mt-4 text-xl font-semibold text-white">{authState.user.displayName || 'User'}</h2>
+              <h2 className="mt-4 text-xl font-semibold text-white">{authState.user?.name || 'User'}</h2>
               <p className="text-sm text-[#9ca3af]">{authState.user.email}</p>
               
               <div className="mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#4f46e5] to-[#6366f1] text-white text-xs font-medium uppercase">
@@ -151,7 +151,7 @@ export const UserDashboard: React.FC = () => {
                 <CardContent className="space-y-4">
                   <div>
                     <h3 className="text-sm font-medium text-[#9ca3af]">Name</h3>
-                    <p className="text-white">{authState.user.displayName || 'Not set'}</p>
+                    <p className="text-white">{authState.user.name || 'Not set'}</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-[#9ca3af]">Email</h3>
@@ -163,7 +163,7 @@ export const UserDashboard: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-[#9ca3af]">Member Since</h3>
-                    <p className="text-white">{new Date().toLocaleDateString()}</p>
+                    <p className="text-white">{new Date(authState.user.createdAt).toLocaleDateString()}</p>
                   </div>
 
                   <div className="pt-4">

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { PremiumFeatures } from './PremiumFeatures';
 
 export const UserSubscriptionInfo: React.FC = () => {
-  const { authState, updateUserTier } = useAuth();
+  const { authState, updateUserProfile } = useAuth();
   const currentTier = authState.user?.tier || 'free';
 
   const plans = [
@@ -76,7 +76,7 @@ export const UserSubscriptionInfo: React.FC = () => {
       (selectedTier === 'premium' && currentTier === 'pro') 
       ? 'downgraded to' : 'upgraded to';
 
-    updateUserTier(selectedTier);
+    updateUserProfile({ tier: selectedTier });
     
     toast.success(
       `Subscription ${action} ${selectedTier}`,
