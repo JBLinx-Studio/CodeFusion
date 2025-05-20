@@ -17,26 +17,18 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
-    intent: 'subscription',
+    intent: 'capture',  // Changed from 'subscription' to 'capture' for more general use
     vault: true,
-    components: 'buttons',
-    'disable-funding': 'credit,card',
+    components: 'buttons,funding-eligibility',
+    'data-client-token': 'abc123', // Added client token
+    'disable-funding': 'credit',
     'enable-funding': 'paypal',
+    'data-sdk-integration-source': 'button-factory',
     'data-namespace': 'paypal_sdk',
   };
 
-  // Create an event handler for script errors
-  const onScriptLoadError = (err: any) => {
-    console.error('PayPal script error:', err);
-    handlePayPalError(err);
-  };
-
   return (
-    <PayPalScriptProvider 
-      options={paypalOptions} 
-      deferLoading={false}
-    >
-      {/* PayPalScriptProvider doesn't accept onError directly, we need to handle errors elsewhere */}
+    <PayPalScriptProvider options={paypalOptions}>
       {children}
     </PayPalScriptProvider>
   );
