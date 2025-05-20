@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Check, CreditCard, PaypalIcon } from 'lucide-react';
+import { Check, CreditCard } from 'lucide-react';
 
 interface PaymentMethodDialogProps {
   open: boolean;

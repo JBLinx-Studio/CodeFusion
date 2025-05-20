@@ -77,7 +77,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
             {getFeatureName(feature)}
           </h3>
           <p className="text-xs text-[#9ca3af] mb-3">
-            Requires {requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} plan
+            Requires {requiredTier === 'premium' ? 'Premium' : 'Pro'} plan
           </p>
           <Button
             size="sm"
@@ -106,7 +106,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
         selectedTier={requiredTier}
         onSuccess={() => {
           setShowPaymentDialog(false);
-          toast.success(`Successfully upgraded to ${requiredTier} plan!`);
+          toast.success(`Successfully upgraded to ${requiredTier === 'premium' ? 'Premium' : 'Pro'} plan!`);
         }}
       />
     </div>
