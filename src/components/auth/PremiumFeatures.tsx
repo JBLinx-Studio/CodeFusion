@@ -7,6 +7,7 @@ import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { UserDashboardDialog } from './UserDashboardDialog';
+import { PaymentMethodDialog } from './PaymentMethodDialog';
 
 interface PremiumFeaturesProps {
   feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess';
@@ -22,6 +23,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   const { authState } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const navigate = useNavigate();
   
   const tierLevel = (tier: string): number => {
@@ -53,16 +55,8 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       return;
     }
     
-    // Open the dashboard dialog to the subscription tab directly
-    setShowDashboard(true);
-    
-    // Schedule selecting the subscription tab after dialog opens
-    setTimeout(() => {
-      const subscriptionTab = document.querySelector('[value="subscription"]') as HTMLButtonElement;
-      if (subscriptionTab) {
-        subscriptionTab.click();
-      }
-    }, 100);
+    // Show payment dialog directly
+    setShowPaymentDialog(true);
   };
   
   if (hasAccess) {
@@ -90,7 +84,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
             className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
             onClick={handlePremiumClick}
           >
-            {authState.isAuthenticated ? 'Upgrade' : 'Sign In'}
+            {authState.isAuthenticated ? 'Upgrade Plan' : 'Sign In'}
           </Button>
         </div>
       </div>
@@ -104,6 +98,16 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       <UserDashboardDialog 
         open={showDashboard}
         onOpenChange={setShowDashboard}
+      />
+
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        selectedTier={requiredTier}
+        onSuccess={() => {
+          setShowPaymentDialog(false);
+          toast.success(`Successfully upgraded to ${requiredTier} plan!`);
+        }}
       />
     </div>
   );

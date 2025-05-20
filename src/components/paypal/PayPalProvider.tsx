@@ -23,8 +23,17 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     dataClientToken: null,
   };
 
+  const handleScriptError = (error: any) => {
+    console.error('Failed to load PayPal script:', error);
+    toast.error('Failed to load payment system. Please try again later.');
+  };
+
   return (
-    <PayPalScriptProvider options={paypalOptions} deferLoading={false}>
+    <PayPalScriptProvider 
+      options={paypalOptions} 
+      deferLoading={false}
+      onError={handleScriptError}
+    >
       {children}
     </PayPalScriptProvider>
   );
