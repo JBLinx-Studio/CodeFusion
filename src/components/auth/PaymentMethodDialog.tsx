@@ -44,6 +44,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   }, [open, resetError]);
 
+  // Handle creating a subscription
   const handleCreateSubscription = (data: any, actions: any) => {
     if (!selectedTier) {
       toast.error("No subscription tier selected");
@@ -61,17 +62,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         plan_id: selectedTier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
         application_context: {
           shipping_preference: 'NO_SHIPPING',
-          user_action: 'SUBSCRIBE_NOW' // Changed to SUBSCRIBE_NOW to complete the flow immediately
+          user_action: 'SUBSCRIBE_NOW'
         }
-      }).then((orderId: string) => {
-        console.log('Subscription created with order ID:', orderId);
-        setSubscriptionCreated(true);
-        return orderId;
-      }).catch((error: any) => {
-        console.error('Failed to create subscription:', error);
-        handlePayPalError(error);
-        setIsLoading(false);
-        return null;
       });
     } catch (error) {
       console.error('Exception creating subscription:', error);
@@ -81,7 +73,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   };
 
-  const handleApprove = async (data: any) => {
+  // Handle the approval of a subscription
+  const handleApprove = async (data: any, actions: any) => {
     try {
       console.log('Subscription approved:', data);
       
@@ -113,6 +106,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         subscriptionId: data.subscriptionID
       });
       
+      setIsLoading(false);
+      
       // Call the success callback which will close this dialog
       onSuccess();
     } catch (error) {
@@ -122,6 +117,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   };
 
+  // Handle PayPal errors
   const handleError = (error: any) => {
     console.error('PayPal error:', error);
     handlePayPalError(error);
@@ -129,6 +125,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     setPaypalInitialized(false);
   };
 
+  // Handle when a user cancels the PayPal flow
   const handleCancel = () => {
     toast.info('Subscription process was canceled');
     setIsLoading(false);
@@ -153,7 +150,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             Choose Payment Method
           </DialogTitle>
           <DialogDescription className="text-[#9ca3af]">
-            Select how you'd like to pay for your {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} subscription
+            Select how you'd like to pay for your {selectedTier ? (selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)) : ''} subscription
           </DialogDescription>
         </DialogHeader>
 

@@ -39,9 +39,20 @@
         text-align: left !important;
       }
       
+      /* Additional styles to ensure code blocks are left-to-right */
+      .CodeMirror {
+        text-align: left !important;
+        direction: ltr !important;
+      }
+      
       /* Global text direction settings */
       body {
         direction: ltr;
+      }
+      
+      /* Additional alignment fixes for code elements */
+      .CodeMirror-lines, .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
+        text-align: left !important;
       }
     </style>
   </head>
