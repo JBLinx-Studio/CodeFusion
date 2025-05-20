@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { initializeGoogleClient, GOOGLE_CLIENT_ID, parseGoogleJwt } from '@/utils/googleAuth';
 
 // Define user types and auth state
 export type UserTier = 'free' | 'premium' | 'pro';
@@ -13,6 +14,7 @@ export interface User {
   tier: UserTier;
   createdAt: string;
   lastLogin: string;
+  authProvider?: 'email' | 'google';
 }
 
 interface AuthState {
@@ -42,6 +44,19 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     isAuthenticated: false,
     isLoading: true,
   });
+
+  // Initialize Google client when component mounts
+  useEffect(() => {
+    const initGoogle = async () => {
+      try {
+        await initializeGoogleClient();
+      } catch (error) {
+        console.error('Failed to initialize Google client', error);
+      }
+    };
+
+    initGoogle();
+  }, []);
 
   // Load saved auth state on mount
   useEffect(() => {
@@ -178,6 +193,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         tier: 'free',
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
+        authProvider: 'email'
       };
 
       // Save new user
@@ -203,28 +219,62 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     toast.info('You have been logged out');
   };
 
-  // Google login (simulated)
+  // Google login (real implementation)
   const googleLogin = async (): Promise<boolean> => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      // In a real app, this would be handled by Google OAuth
-      // For demo purposes, we create a mock Google user
-      const mockGoogleUser = {
-        id: `google_${Date.now()}`,
-        email: `user${Math.floor(Math.random() * 1000)}@gmail.com`,
-        name: 'Google User',
-        avatar: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        tier: 'free' as UserTier,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      };
-
+      
+      // Make sure Google client is initialized
+      await initializeGoogleClient();
+      
+      if (!window.google || !window.google.accounts) {
+        toast.error('Google authentication is not available');
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      // Create a promise to handle the Google sign-in callback
+      const googleSignInResult = await new Promise<{ credential: string } | null>((resolve) => {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => {
+            if (response && response.credential) {
+              resolve({ credential: response.credential });
+            } else {
+              resolve(null);
+            }
+          },
+          auto_select: true,
+        });
+        
+        // Prompt the user to select an account
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            // If prompt not displayed or skipped, resolve with null
+            resolve(null);
+          }
+        });
+      });
+      
+      // If no result, return false
+      if (!googleSignInResult) {
+        toast.error('Google login failed or was cancelled');
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      // Parse the JWT to get user info
+      const { email, name, picture } = parseGoogleJwt(googleSignInResult.credential);
+      
+      if (!email) {
+        toast.error('Failed to get user information from Google');
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
       const users = getUsers();
       const existingUser = users.find(
-        u => u.email.toLowerCase() === mockGoogleUser.email.toLowerCase()
+        u => u.email.toLowerCase() === email.toLowerCase()
       );
 
       if (existingUser) {
@@ -232,23 +282,40 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const updatedUser = {
           ...existingUser,
           lastLogin: new Date().toISOString(),
+          avatar: picture || existingUser.avatar, // Update avatar if new one available
+          authProvider: 'google' as const
         };
         const updatedUsers = users.map(u =>
           u.id === updatedUser.id ? updatedUser : u
         );
         saveUsers(updatedUsers);
         setCurrentUser(updatedUser);
+        
+        toast.success('Google login successful', {
+          description: `Welcome back, ${updatedUser.name}!`,
+        });
       } else {
+        // Create new user
+        const newUser: User = {
+          id: `google_${Date.now()}`,
+          email,
+          name,
+          avatar: picture,
+          tier: 'free',
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          authProvider: 'google'
+        };
+        
         // Save new user
-        saveUsers([...users, mockGoogleUser]);
-        setCurrentUser(mockGoogleUser);
+        saveUsers([...users, newUser]);
+        setCurrentUser(newUser);
+        
+        toast.success('Google login successful', {
+          description: `Welcome, ${newUser.name}!`,
+        });
       }
-
-      toast.success('Google login successful', {
-        description: `Welcome${existingUser ? ' back' : ''}, ${
-          existingUser ? existingUser.name : mockGoogleUser.name
-        }!`,
-      });
+      
       return true;
     } catch (error) {
       console.error('Google login error:', error);
