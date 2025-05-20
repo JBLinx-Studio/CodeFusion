@@ -3,9 +3,9 @@ import React from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
 
-// PayPal client IDs - replace with your own when going to production
+// PayPal client IDs - using your sandbox credentials
 const PAYPAL_CLIENT_ID = {
-  sandbox: 'AUuNirVvb6STfDVfZWvvVXG4j1pYz9M8xyr6nWKVlnEpcnO0zMoe0bp5h0hponRUVXKYGw_awWrmEaA0',
+  sandbox: 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH',
   production: '' // Leave empty for now - would be filled for production
 };
 
@@ -19,7 +19,6 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     clientId: PAYPAL_CLIENT_ID.sandbox, // Using sandbox for testing
     currency: 'USD',
     intent: 'subscription',
-    'data-client-token': '',
     components: 'buttons,funding-eligibility',
     'disable-funding': 'paylater,card',
     'enable-funding': 'paypal',

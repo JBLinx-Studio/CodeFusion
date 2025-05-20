@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Edit2, Save, X } from 'lucide-react';
+import { Check, Settings, X } from 'lucide-react';
 
 interface UserProfileSectionProps {
   user: User | null;
@@ -58,7 +58,7 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user, on
               className="bg-[#252b3b] hover:bg-[#323a52] border-[#3e4a69] text-[#e2e8f0]"
               onClick={() => setIsEditing(true)}
             >
-              <Edit2 className="h-4 w-4 mr-1" /> Edit
+              <Settings className="h-4 w-4 mr-1" /> Edit
             </Button>
           )}
         </div>
@@ -127,6 +127,12 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user, on
                   }>
                     {user?.tier ? user.tier.charAt(0).toUpperCase() + user.tier.slice(1) : 'Free'}
                   </span>
+                  
+                  {user?.subscriptionId && (
+                    <span className="text-xs text-[#9ca3af]">
+                      Subscription ID: <span className="font-mono bg-[#1a1f2c] px-1 rounded text-[10px]">{user.subscriptionId.substring(0, 8)}...</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -157,7 +163,7 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user, on
               className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5]"
               onClick={handleSave}
             >
-              <Save className="h-4 w-4 mr-1" /> Save Changes
+              <Check className="h-4 w-4 mr-1" /> Save Changes
             </Button>
           </div>
         )}

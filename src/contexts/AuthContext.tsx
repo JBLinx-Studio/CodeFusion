@@ -15,6 +15,7 @@ export interface User {
   createdAt: string;
   lastLogin: string;
   authProvider?: 'email' | 'google';
+  subscriptionId?: string | null;
 }
 
 interface AuthState {
@@ -215,6 +216,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   // Logout user
   const logout = () => {
+    // If the user has an active subscription, handle cleanup
+    // In a real app, you might want to confirm with the user before logging out
+    // if they have an active subscription
     setCurrentUser(null);
     toast.info('You have been logged out');
   };
@@ -338,6 +342,12 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         ...updates,
       };
 
+      // If updating subscription status
+      if (updates.tier === 'free' && authState.user.tier !== 'free') {
+        // User is downgrading from a paid plan
+        console.log('User downgraded from paid plan to free plan');
+      }
+
       const users = getUsers();
       const updatedUsers = users.map(u =>
         u.id === updatedUser.id ? updatedUser : u
@@ -345,7 +355,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
       saveUsers(updatedUsers);
       setCurrentUser(updatedUser);
-      toast.success('Profile updated');
+      
+      // Only show toast for non-subscription updates
+      if (!('tier' in updates) && !('subscriptionId' in updates)) {
+        toast.success('Profile updated');
+      }
     } catch (error) {
       console.error('Update profile error:', error);
       toast.error('Failed to update profile');
