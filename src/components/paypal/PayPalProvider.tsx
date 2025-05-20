@@ -19,11 +19,20 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
-    intent: 'capture',
+    intent: 'subscription', // Changed from 'capture' to 'subscription'
     components: 'buttons,funding-eligibility',
     'enable-funding': 'paypal',
     'disable-funding': 'paylater,card',
-    dataClientToken: null,
+    vault: true,
+    'data-namespace': 'CodeFusionPayPal',
+    // We'll handle errors through the onInit and onError events
+    onError: (err: any) => {
+      console.error("PayPal script error:", err);
+      handlePayPalError(err);
+      toast.error("Failed to load payment system", {
+        description: "Please try again later or contact support."
+      });
+    }
   };
 
   return (
