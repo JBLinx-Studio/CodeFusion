@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { basicSetup } from "@codemirror/basic-setup";
 import { EditorState } from "@codemirror/state";
@@ -105,6 +106,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             fontFamily: '"JetBrains Mono", "Fira Code", monospace',
             fontSize: settings.fontSize,
             padding: "10px 0",
+            textAlign: "left", // Ensure text alignment is left
           },
           ".cm-gutters": {
             backgroundColor: settings.theme === 'dark' ? "#151922" : "#e9ecef",
@@ -143,6 +145,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           },
           ".cm-line": {
             padding: "0 10px",
+            textAlign: "left", // Ensure text alignment is left
           },
           // Enhanced syntax highlighting with transitions removed
           ".cm-keyword": { 
@@ -273,8 +276,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           </motion.span>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden bg-[#0f1117] dark:bg-[#151922] relative min-h-[200px]">
-        <div ref={editorRef} className="absolute inset-0 overflow-auto" />
+      <div className="flex-1 overflow-hidden bg-[#0f1117] dark:bg-[#151922] relative min-h-[200px] text-left">
+        <div ref={editorRef} className="absolute inset-0 overflow-auto text-left" />
       </div>
       {isActive && (
         <motion.div 

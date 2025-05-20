@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Check, CreditCard } from 'lucide-react';
+import { Check, CreditCard, Loader } from 'lucide-react';
 import { usePayPalError } from '../paypal/usePayPalError';
 
 interface PaymentMethodDialogProps {
@@ -31,6 +31,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [isLoading, setIsLoading] = useState(false);
   const [paypalInitialized, setPaypalInitialized] = useState(false);
+  const [subscriptionCreated, setSubscriptionCreated] = useState(false);
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
@@ -38,26 +39,42 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   useEffect(() => {
     if (!open) {
       setIsLoading(false);
+      setSubscriptionCreated(false);
       resetError();
     }
   }, [open, resetError]);
 
   const handleCreateSubscription = (data: any, actions: any) => {
-    if (!selectedTier) return null;
+    if (!selectedTier) {
+      toast.error("No subscription tier selected");
+      return null;
+    }
+    
+    setIsLoading(true);
     
     try {
       console.log('Creating subscription for plan:', selectedTier);
       setPaypalInitialized(true);
       
+      // Create the subscription with the appropriate plan ID
       return actions.subscription.create({
         plan_id: selectedTier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
         application_context: {
           shipping_preference: 'NO_SHIPPING',
-          user_action: 'CONTINUE' // Ensures PayPal shows the checkout page
+          user_action: 'SUBSCRIBE_NOW' // Changed to SUBSCRIBE_NOW to complete the flow immediately
         }
+      }).then((orderId: string) => {
+        console.log('Subscription created with order ID:', orderId);
+        setSubscriptionCreated(true);
+        return orderId;
+      }).catch((error: any) => {
+        console.error('Failed to create subscription:', error);
+        handlePayPalError(error);
+        setIsLoading(false);
+        return null;
       });
     } catch (error) {
-      console.error('Failed to create subscription:', error);
+      console.error('Exception creating subscription:', error);
       handlePayPalError(error);
       setIsLoading(false);
       return null;
@@ -65,11 +82,13 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const handleApprove = async (data: any) => {
-    setIsLoading(true);
     try {
       console.log('Subscription approved:', data);
       
-      if (!selectedTier) return;
+      if (!selectedTier) {
+        toast.error("No subscription tier selected");
+        return;
+      }
       
       // Store subscription data for later management
       const subscriptionData = {
@@ -94,13 +113,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         subscriptionId: data.subscriptionID
       });
       
+      // Call the success callback which will close this dialog
       onSuccess();
     } catch (error) {
       console.error('Error processing subscription:', error);
       handlePayPalError(error);
-    } finally {
       setIsLoading(false);
-      setPaypalInitialized(false);
     }
   };
 
@@ -121,7 +139,14 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   if (!selectedTier) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Only allow closing if not currently loading
+      if (isLoading && newOpen === false) {
+        toast.info("Please wait until the payment process completes");
+        return;
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="bg-[#1a1f2c] border-[#2d3748] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent">
@@ -189,8 +214,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                 
                 {isLoading ? (
                   <div className="w-full py-3 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                    <span>Processing...</span>
+                    <Loader className="w-4 h-4 animate-spin text-[#6366f1]" />
+                    <span>Processing payment...</span>
                   </div>
                 ) : (
                   <div className="w-full overflow-hidden rounded-md">
@@ -207,6 +232,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                       onApprove={handleApprove}
                       onError={handleError}
                       onCancel={handleCancel}
+                      disabled={isLoading || subscriptionCreated}
                     />
                   </div>
                 )}
@@ -222,6 +248,17 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                 </Button>
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="mt-4 p-3 rounded-md bg-[#2d3748]/30 border border-[#3e4a69] text-xs">
+          <h4 className="font-medium text-[#d1d5db]">Test Payment Information</h4>
+          <p className="text-[#9ca3af] mt-1">
+            This is a sandbox environment. Use these test credentials:
+          </p>
+          <div className="bg-[#1a1f2c] p-1.5 rounded mt-2 font-mono text-[10px] text-[#d1d5db]">
+            Email: sb-47nmps29800276@personal.example.com<br />
+            Password: M3@Y5!zi
           </div>
         </div>
       </DialogContent>

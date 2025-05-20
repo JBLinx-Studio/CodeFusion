@@ -30,10 +30,23 @@
         }
       }(window.location))
     </script>
+    <style>
+      /* Ensure code blocks are left-aligned */
+      code, pre {
+        text-align: left !important;
+      }
+      .cm-content, .cm-line {
+        text-align: left !important;
+      }
+      
+      /* Global text direction settings */
+      body {
+        direction: ltr;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
