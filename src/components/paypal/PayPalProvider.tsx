@@ -14,8 +14,9 @@ interface PayPalProviderProps {
 }
 
 export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
+  // Fixed the PayPal options to match the required interface
   const paypalOptions = {
-    'client-id': PAYPAL_CLIENT_ID.sandbox, // Using sandbox for testing
+    clientId: PAYPAL_CLIENT_ID.sandbox, // Using sandbox for testing
     currency: 'USD',
     intent: 'subscription',
     'data-client-token': '',
