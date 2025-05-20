@@ -26,12 +26,6 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     dataClientToken: null,
   };
 
-  // Handle the script loading error separately from transaction errors
-  const handleScriptError = (err: any) => {
-    console.error('Failed to load PayPal script:', err);
-    handlePayPalError(err);
-  };
-
   return (
     <PayPalScriptProvider 
       options={paypalOptions} 

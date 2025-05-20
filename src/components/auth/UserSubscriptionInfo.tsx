@@ -163,15 +163,15 @@ export const UserSubscriptionInfo: React.FC = () => {
           <div className="mt-8 p-4 rounded-lg bg-[#2d3748]/50 border border-[#4b5563] flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-[#f87171] shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-sm font-medium text-white">Testing PayPal Integration</h4>
+              <h4 className="text-sm font-medium text-white">Sandbox Environment</h4>
               <p className="text-xs text-[#9ca3af] mt-1">
-                This integration uses PayPal's sandbox environment for testing. You can use the following PayPal sandbox credentials to test:
+                This is a demonstration environment for testing the subscription process. For testing purposes, you can use our PayPal sandbox account:
                 <br />
-                <span className="font-mono bg-[#1a1f2c] px-1 rounded">Email: sb-47nmps29800276@personal.example.com</span>
+                <span className="font-mono bg-[#1a1f2c] px-1 rounded mt-1 inline-block">Email: sb-47nmps29800276@personal.example.com</span>
                 <br />
-                <span className="font-mono bg-[#1a1f2c] px-1 rounded">Password: M3@Y5!zi</span>
+                <span className="font-mono bg-[#1a1f2c] px-1 rounded mt-1 inline-block">Password: M3@Y5!zi</span>
                 <br />
-                <span className="text-yellow-400">Note: No actual payments will be processed.</span>
+                <span className="text-yellow-400 mt-1 inline-block">All transactions in this demo are simulated and no actual charges will be made.</span>
               </p>
             </div>
           </div>

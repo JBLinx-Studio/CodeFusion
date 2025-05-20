@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useLayout } from '@/contexts/LayoutContext';
@@ -78,7 +77,7 @@ export const AppHeader: React.FC = () => {
             className="text-xl font-semibold bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent hover:from-[#818cf8] hover:to-[#d946ef] transition-all duration-300"
             whileHover={{ scale: 1.03 }}
           >
-            CodePlayground
+            CodeFusion
           </motion.h1>
         </div>
         
