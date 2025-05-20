@@ -1,241 +1,334 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CircleUser, CreditCard, Settings, Star } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { UserSubscriptionInfo } from './UserSubscriptionInfo';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { PremiumFeatures } from './PremiumFeatures';
+import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut, Settings, User, CreditCard, FileText, Users, BarChart2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 export const UserDashboard: React.FC = () => {
-  const { authState, updateUserProfile } = useAuth();
+  const { authState, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState('account');
+  const navigate = useNavigate();
 
-  if (!authState.isAuthenticated || !authState.user) {
-    return null;
+  if (!authState.user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-500">Access Denied</h1>
+          <p className="mt-2 text-gray-400">You need to be logged in to view this page.</p>
+          <Button 
+            variant="default"
+            className="mt-4"
+            onClick={() => navigate('/')}
+          >
+            Go to Home
+          </Button>
+        </div>
+      </div>
+    );
   }
 
-  const user = authState.user;
+  // Mock usage data
+  const storageUsed = authState.user.tier === 'free' ? 45 : authState.user.tier === 'premium' ? 20 : 10;
+  const storageLimit = authState.user.tier === 'free' ? 100 : authState.user.tier === 'premium' ? 500 : 1000;
+  const projectsCount = authState.user.tier === 'free' ? 3 : authState.user.tier === 'premium' ? 8 : 12;
+  const projectsLimit = authState.user.tier === 'free' ? 5 : authState.user.tier === 'premium' ? 15 : 50;
 
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'premium':
-        return 'bg-gradient-to-r from-[#9333ea] to-[#4f46e5] text-white';
-      case 'pro':
-        return 'bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white';
-      default:
-        return 'bg-[#2d3748] text-white';
-    }
-  };
-
-  const getMemberSince = () => {
-    try {
-      const date = new Date(user.createdAt);
-      return new Intl.DateTimeFormat('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }).format(date);
-    } catch (e) {
-      return 'Unknown';
-    }
+  const handleSignOut = () => {
+    signOut();
+    toast.success("Signed out successfully");
+    navigate('/');
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-4 bg-[#1a1f2c] border border-[#2d3748]">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-[#2d3748]">Overview</TabsTrigger>
-          <TabsTrigger value="subscription" className="data-[state=active]:bg-[#2d3748]">Subscription</TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-[#2d3748]">Profile Settings</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="space-y-4">
-          <Card className="bg-[#1a1f2c] border border-[#2d3748] text-white">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="space-y-1">
-                <CardTitle className="text-2xl">Welcome back, {user.name}</CardTitle>
-                <CardDescription className="text-[#9ca3af]">
-                  Member since {getMemberSince()}
-                </CardDescription>
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar */}
+        <Card className="lg:w-64 w-full bg-[#1a1f2c] border-[#2d3748] shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex flex-col items-center py-6">
+              <Avatar className="w-24 h-24 border-2 border-[#6366f1] p-1">
+                <AvatarImage src={authState.user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(authState.user.displayName || 'User')}`} />
+                <AvatarFallback className="bg-[#2d3748] text-[#9ca3af] text-lg">
+                  {authState.user.displayName?.[0] || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <h2 className="mt-4 text-xl font-semibold text-white">{authState.user.displayName || 'User'}</h2>
+              <p className="text-sm text-[#9ca3af]">{authState.user.email}</p>
+              
+              <div className="mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#4f46e5] to-[#6366f1] text-white text-xs font-medium uppercase">
+                {authState.user.tier.charAt(0).toUpperCase() + authState.user.tier.slice(1)}
               </div>
-              <Badge className={`${getTierColor(user.tier)} ml-2`}>
-                {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)} Account
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 space-y-2">
-                  <h3 className="text-sm font-medium text-[#9ca3af]">Account Status</h3>
-                  <div className="flex items-center text-white">
-                    <CircleUser className="mr-2 h-4 w-4 text-[#6366f1]" />
-                    <span>Active</span>
-                  </div>
-                </div>
-                <div className="flex-1 space-y-2">
-                  <h3 className="text-sm font-medium text-[#9ca3af]">Authentication Provider</h3>
-                  <div className="flex items-center text-white">
-                    {user.authProvider === 'google' ? (
-                      <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                        <path fill="#FFC107" d="M43.6 20H24v8h11.4c-1.1 5.4-5.9 8.6-11.4 8.6-7 0-12.6-5.6-12.6-12.6S17 11.4 24 11.4c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.4 5.1 29.5 3 24 3 13.5 3 5 11.5 5 22s8.5 19 19 19 19-8.5 19-19c0-.7 0-1.3-.1-2h-19.8z"/>
-                        <path fill="#FF3D00" d="M5.8 13.5l6.6 4.8C14.3 13.3 18.8 10 24 10c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.4 4.1 29.5 2 24 2 15.5 2 8.2 6.7 5.8 13.5z"/>
-                        <path fill="#4CAF50" d="M24 44c5.2 0 10-1.9 13.7-5.2L31.9 33c-2.1 1.4-4.8 2.2-7.9 2.2-5.5 0-10.3-3.2-11.4-8.6l-6.6 5.1C9.3 38.5 16.1 44 24 44z"/>
-                        <path fill="#1976D2" d="M43.6 20H24v8h11.4c-.6 2.9-2.2 5.5-4.5 7.2l5.7 5.8c4-3.5 6.4-8.7 6.4-15 0-.7 0-1.3-.1-2h-19.8z"/>
-                      </svg>
-                    ) : (
-                      <CreditCard className="mr-2 h-4 w-4 text-[#6366f1]" />
-                    )}
-                    <span>{user.authProvider === 'google' ? 'Google' : 'Email & Password'}</span>
-                  </div>
-                </div>
-                <div className="flex-1 space-y-2">
-                  <h3 className="text-sm font-medium text-[#9ca3af]">Last Login</h3>
-                  <div className="flex items-center text-white">
-                    <span>
-                      {new Date(user.lastLogin).toLocaleDateString()} at {new Date(user.lastLogin).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-[#1a1f2c] border border-[#2d3748] text-white">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Star className="mr-2 h-4 w-4 text-[#f59e0b]" />
-                  Available Features
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Code Playground</span>
-                    <Badge className="bg-green-600">Available</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Code Sharing</span>
-                    <Badge className="bg-green-600">Available</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Project Storage</span>
-                    <Badge className="bg-green-600">Available</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Private Projects</span>
-                    <Badge className={user.tier !== 'free' ? "bg-green-600" : "bg-[#4b5563]"}>
-                      {user.tier !== 'free' ? 'Available' : 'Premium Feature'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Advanced Export</span>
-                    <Badge className={user.tier !== 'free' ? "bg-green-600" : "bg-[#4b5563]"}>
-                      {user.tier !== 'free' ? 'Available' : 'Premium Feature'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">API Access</span>
-                    <Badge className={user.tier === 'pro' ? "bg-green-600" : "bg-[#4b5563]"}>
-                      {user.tier === 'pro' ? 'Available' : 'Pro Feature'}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                {user.tier === 'free' && (
-                  <Button className="w-full bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5]">
-                    Upgrade to Premium
-                  </Button>
-                )}
-                {user.tier === 'premium' && (
-                  <Button className="w-full bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309]">
-                    Upgrade to Pro
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
-            
-            <Card className="bg-[#1a1f2c] border border-[#2d3748] text-white">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="mr-2 h-4 w-4 text-[#6366f1]" />
-                  Account Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[#9ca3af]">Email</span>
-                    <span>{user.email}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[#9ca3af]">User ID</span>
-                    <span className="font-mono text-xs">{user.id}</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#9ca3af]">Storage Used</span>
-                      <span>23% / 500MB</span>
-                    </div>
-                    <Progress value={23} className="h-2 bg-[#2d3748]" indicatorClassName="bg-[#6366f1]" />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full border-[#374151] hover:bg-[#1e293b] text-white">
-                  View Account Details
+            <div className="mt-6">
+              <nav className="flex flex-col space-y-1">
+                <Button 
+                  variant="ghost" 
+                  className={`justify-start ${activeTab === 'account' ? 'bg-[#2d3748] text-white' : 'text-[#9ca3af] hover:text-white hover:bg-[#2d3748]/60'}`}
+                  onClick={() => setActiveTab('account')}
+                >
+                  <User className="h-4 w-4 mr-3" />
+                  Account
                 </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="subscription">
-          <UserSubscriptionInfo />
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <Card className="bg-[#1a1f2c] border border-[#2d3748] text-white">
-            <CardHeader>
-              <CardTitle>Profile Settings</CardTitle>
-              <CardDescription className="text-[#9ca3af]">
-                Update your account information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="name">Name</label>
-                <input
-                  id="name"
-                  type="text"
-                  className="w-full bg-[#131620] border border-[#374151] rounded-md p-2 text-white"
-                  defaultValue={user.name}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  className="w-full bg-[#131620] border border-[#374151] rounded-md p-2 text-white"
-                  defaultValue={user.email}
-                  disabled={user.authProvider === 'google'}
-                />
-                {user.authProvider === 'google' && (
-                  <p className="text-xs text-[#9ca3af]">Email managed by Google authentication</p>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5]">
-                Save Changes
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                <Button 
+                  variant="ghost"
+                  className={`justify-start ${activeTab === 'subscription' ? 'bg-[#2d3748] text-white' : 'text-[#9ca3af] hover:text-white hover:bg-[#2d3748]/60'}`}
+                  onClick={() => setActiveTab('subscription')}
+                >
+                  <CreditCard className="h-4 w-4 mr-3" />
+                  Subscription
+                </Button>
+                <Button 
+                  variant="ghost"
+                  className={`justify-start ${activeTab === 'projects' ? 'bg-[#2d3748] text-white' : 'text-[#9ca3af] hover:text-white hover:bg-[#2d3748]/60'}`}
+                  onClick={() => setActiveTab('projects')}
+                >
+                  <FileText className="h-4 w-4 mr-3" />
+                  Projects
+                </Button>
+                <Button 
+                  variant="ghost"
+                  className={`justify-start ${activeTab === 'team' ? 'bg-[#2d3748] text-white' : 'text-[#9ca3af] hover:text-white hover:bg-[#2d3748]/60'}`}
+                  onClick={() => setActiveTab('team')}
+                >
+                  <Users className="h-4 w-4 mr-3" />
+                  Team
+                </Button>
+                <Button 
+                  variant="ghost"
+                  className={`justify-start ${activeTab === 'analytics' ? 'bg-[#2d3748] text-white' : 'text-[#9ca3af] hover:text-white hover:bg-[#2d3748]/60'}`}
+                  onClick={() => setActiveTab('analytics')}
+                >
+                  <BarChart2 className="h-4 w-4 mr-3" />
+                  Analytics
+                </Button>
+                <Button 
+                  variant="ghost"
+                  className={`justify-start ${activeTab === 'settings' ? 'bg-[#2d3748] text-white' : 'text-[#9ca3af] hover:text-white hover:bg-[#2d3748]/60'}`}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  <Settings className="h-4 w-4 mr-3" />
+                  Settings
+                </Button>
+
+                <Button 
+                  variant="ghost"
+                  className="justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-8"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4 mr-3" />
+                  Sign out
+                </Button>
+              </nav>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Content */}
+        <div className="flex-1">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full"
+          >
+            {activeTab === 'account' && (
+              <Card className="bg-[#1a1f2c] border-[#2d3748] shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Account Information</CardTitle>
+                  <CardDescription className="text-[#9ca3af]">Manage your account details</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-[#9ca3af]">Name</h3>
+                    <p className="text-white">{authState.user.displayName || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-[#9ca3af]">Email</h3>
+                    <p className="text-white">{authState.user.email}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-[#9ca3af]">Account Type</h3>
+                    <p className="text-white capitalize">{authState.user.tier} Account</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-[#9ca3af]">Member Since</h3>
+                    <p className="text-white">{new Date().toLocaleDateString()}</p>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button className="bg-[#2d3748] hover:bg-[#374151] text-white mr-4">
+                      Edit Profile
+                    </Button>
+                    <Button variant="outline" className="border-[#4b5563] text-[#d1d5db] hover:bg-[#2d3748]">
+                      Change Password
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'subscription' && (
+              <UserSubscriptionInfo />
+            )}
+
+            {activeTab === 'projects' && (
+              <Card className="bg-[#1a1f2c] border-[#2d3748] shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Your Projects</CardTitle>
+                  <CardDescription className="text-[#9ca3af]">
+                    Manage and monitor your projects
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-[#9ca3af]">
+                        Projects ({projectsCount}/{projectsLimit})
+                      </span>
+                      <span className="text-xs text-[#9ca3af]">
+                        {Math.round((projectsCount / projectsLimit) * 100)}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={(projectsCount / projectsLimit) * 100} 
+                      className="h-2 bg-[#2d3748]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-[#9ca3af]">
+                        Storage ({storageUsed} MB/{storageLimit} MB)
+                      </span>
+                      <span className="text-xs text-[#9ca3af]">
+                        {Math.round((storageUsed / storageLimit) * 100)}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={(storageUsed / storageLimit) * 100}
+                      className="h-2 bg-[#2d3748]" 
+                    />
+                  </div>
+
+                  <PremiumFeatures feature="privateProjects" requiredTier="premium">
+                    <Button className="w-full bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white">
+                      Create New Project
+                    </Button>
+                  </PremiumFeatures>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'team' && (
+              <Card className="bg-[#1a1f2c] border-[#2d3748] shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Team Management</CardTitle>
+                  <CardDescription className="text-[#9ca3af]">
+                    Collaborate with team members
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <PremiumFeatures feature="collaboration" requiredTier="premium">
+                    <div className="p-6 text-center">
+                      <h3 className="text-lg font-medium text-white">Team Collaboration</h3>
+                      <p className="text-[#9ca3af] mt-2">
+                        Invite team members and collaborate on projects together.
+                      </p>
+                      <Button className="mt-4 bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white">
+                        Invite Team Members
+                      </Button>
+                    </div>
+                  </PremiumFeatures>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'analytics' && (
+              <Card className="bg-[#1a1f2c] border-[#2d3748] shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Analytics</CardTitle>
+                  <CardDescription className="text-[#9ca3af]">
+                    View your usage statistics
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PremiumFeatures feature="advancedExport" requiredTier="pro">
+                    <div className="p-6 text-center">
+                      <h3 className="text-lg font-medium text-white">Advanced Analytics</h3>
+                      <p className="text-[#9ca3af] mt-2">
+                        Get detailed insights about your projects and usage patterns.
+                      </p>
+                      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-[#2d3748] rounded-lg p-4 text-center">
+                            <div className="text-3xl font-bold text-[#6366f1]">{Math.floor(Math.random() * 100)}</div>
+                            <div className="text-sm text-[#9ca3af] mt-2">Metric {i}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </PremiumFeatures>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'settings' && (
+              <Card className="bg-[#1a1f2c] border-[#2d3748] shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Settings</CardTitle>
+                  <CardDescription className="text-[#9ca3af]">
+                    Customize your experience
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-white mb-2">Theme Preferences</h3>
+                      <PremiumFeatures feature="customThemes" requiredTier="premium">
+                        <div className="grid grid-cols-3 gap-2">
+                          {['Default', 'Dark', 'Light'].map((theme) => (
+                            <div 
+                              key={theme}
+                              className={`p-2 rounded-md text-center cursor-pointer border ${theme === 'Default' ? 'bg-[#2d3748] border-[#6366f1]' : 'bg-[#1a1f2c] border-[#374151] hover:bg-[#2d3748]'}`}
+                            >
+                              {theme}
+                            </div>
+                          ))}
+                        </div>
+                      </PremiumFeatures>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-white mb-2">Notification Settings</h3>
+                      <div className="space-y-2">
+                        {['Email notifications', 'Project updates', 'Team messages'].map((setting) => (
+                          <div key={setting} className="flex items-center justify-between bg-[#1a1f2c] border border-[#374151] p-2 rounded-md">
+                            <span>{setting}</span>
+                            <Button size="sm" variant="outline" className="h-7 border-[#4b5563] text-[#d1d5db] hover:bg-[#2d3748]">
+                              Enable
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 };
