@@ -25,15 +25,18 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     'data-namespace': 'paypal_sdk',
   };
 
+  // Create an event handler for script errors
+  const onScriptLoadError = (err: any) => {
+    console.error('PayPal script error:', err);
+    handlePayPalError(err);
+  };
+
   return (
     <PayPalScriptProvider 
       options={paypalOptions} 
       deferLoading={false}
-      onError={(err) => {
-        console.error('PayPal script error:', err);
-        handlePayPalError(err);
-      }}
     >
+      {/* PayPalScriptProvider doesn't accept onError directly, we need to handle errors elsewhere */}
       {children}
     </PayPalScriptProvider>
   );

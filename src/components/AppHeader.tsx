@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { LogIn, Menu } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { Link } from 'react-router-dom';
-import { useMediaQuery } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const AppHeader: React.FC = () => {
   const { authState } = useAuth();
   const [showAuthModal, setShowAuthModal] = React.useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   
   return (
