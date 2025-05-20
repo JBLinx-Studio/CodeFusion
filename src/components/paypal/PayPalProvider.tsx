@@ -3,25 +3,24 @@ import React from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
 
-// PayPal client IDs - using your sandbox credentials
-const PAYPAL_CLIENT_ID = {
-  sandbox: 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH',
-  production: '' // Leave empty for now - would be filled for production
-};
+// PayPal client IDs for sandbox environment
+const PAYPAL_CLIENT_ID = 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH';
+// Note: Secret key is not used in the frontend directly, it would be used in the backend
 
 interface PayPalProviderProps {
   children: React.ReactNode;
 }
 
 export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
-  // Fixed the PayPal options to match the required interface
+  // Configure PayPal options according to their documentation
   const paypalOptions = {
-    clientId: PAYPAL_CLIENT_ID.sandbox, // Using sandbox for testing
+    clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
-    intent: 'subscription',
+    intent: 'capture',
     components: 'buttons,funding-eligibility',
-    'disable-funding': 'paylater,card',
     'enable-funding': 'paypal',
+    'disable-funding': 'paylater,card',
+    dataClientToken: null,
   };
 
   return (

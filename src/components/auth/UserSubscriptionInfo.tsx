@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { PremiumFeatures } from './PremiumFeatures';
 import { PayPalSubscriptionButton } from '../paypal/PayPalSubscriptionButton';
 
 export const UserSubscriptionInfo: React.FC = () => {
@@ -132,21 +131,22 @@ export const UserSubscriptionInfo: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-                {plan.tier === 'free' ? (
-                  <Button
-                    className={`w-full mt-6 ${
-                      plan.disabled 
-                        ? 'bg-[#2d3748] text-[#9ca3af] cursor-not-allowed' 
-                        : 'bg-[#374151] hover:bg-[#4b5563] text-white'
-                    }`}
-                    disabled={plan.disabled}
-                    onClick={() => handlePlanChange(plan.tier as 'free' | 'premium' | 'pro')}
-                  >
-                    {plan.buttonText}
-                  </Button>
-                ) : (
-                  <PremiumFeatures feature="customThemes" requiredTier={plan.tier as 'premium' | 'pro'}>
-                    <div className="w-full mt-6">
+
+                <div className="mt-6">
+                  {plan.tier === 'free' ? (
+                    <Button
+                      className={`w-full ${
+                        plan.disabled 
+                          ? 'bg-[#2d3748] text-[#9ca3af] cursor-not-allowed' 
+                          : 'bg-[#374151] hover:bg-[#4b5563] text-white'
+                      }`}
+                      disabled={plan.disabled}
+                      onClick={() => handlePlanChange(plan.tier as 'free' | 'premium' | 'pro')}
+                    >
+                      {plan.buttonText}
+                    </Button>
+                  ) : (
+                    <>
                       {plan.disabled ? (
                         <Button
                           className="w-full bg-[#2d3748] text-[#9ca3af] cursor-not-allowed"
@@ -165,9 +165,9 @@ export const UserSubscriptionInfo: React.FC = () => {
                           }}
                         />
                       )}
-                    </div>
-                  </PremiumFeatures>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ))}

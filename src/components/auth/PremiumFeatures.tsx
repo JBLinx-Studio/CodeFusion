@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { UserDashboardDialog } from './UserDashboardDialog';
 
 interface PremiumFeaturesProps {
   feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess';
@@ -20,6 +21,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
 }) => {
   const { authState } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const navigate = useNavigate();
   
   const tierLevel = (tier: string): number => {
@@ -51,15 +53,16 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       return;
     }
     
-    toast.info(`Upgrade to ${requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)}`, {
-      description: `This feature requires a ${requiredTier} subscription.`,
-      action: {
-        label: 'Go to Dashboard',
-        onClick: () => {
-          navigate('/dashboard');
-        }
+    // Open the dashboard dialog to the subscription tab directly
+    setShowDashboard(true);
+    
+    // Schedule selecting the subscription tab after dialog opens
+    setTimeout(() => {
+      const subscriptionTab = document.querySelector('[value="subscription"]') as HTMLButtonElement;
+      if (subscriptionTab) {
+        subscriptionTab.click();
       }
-    });
+    }, 100);
   };
   
   if (hasAccess) {
@@ -96,6 +99,11 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)}
         defaultView="login"
+      />
+      
+      <UserDashboardDialog 
+        open={showDashboard}
+        onOpenChange={setShowDashboard}
       />
     </div>
   );

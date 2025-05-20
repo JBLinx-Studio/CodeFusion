@@ -24,12 +24,13 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
   onError,
   onCancel,
 }) => {
-  const [{ isPending }] = usePayPalScriptReducer();
+  const [{ isPending, isRejected }] = usePayPalScriptReducer();
   const [isProcessing, setIsProcessing] = useState(false);
   const { updateUserProfile, authState } = useAuth();
 
   const handleCreateSubscription = async (data: any, actions: any) => {
     try {
+      console.log('Creating subscription for plan:', tier);
       return actions.subscription.create({
         plan_id: tier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
         application_context: {
@@ -96,6 +97,15 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
 
   // Don't allow subscription to the current tier
   const isCurrentTier = authState.user?.tier === tier;
+
+  // If PayPal is not loaded properly, show error
+  if (isRejected) {
+    return (
+      <div className="w-full py-3 text-center bg-red-900/30 text-red-400 rounded-md">
+        PayPal failed to load. Please refresh and try again.
+      </div>
+    );
+  }
 
   return (
     <>
