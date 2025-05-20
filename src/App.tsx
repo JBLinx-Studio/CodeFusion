@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { PayPalProvider } from "./components/paypal/PayPalProvider";
 import "./App.css";
 
 // Configure the Query Client with better defaults
@@ -27,29 +28,31 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <SettingsProvider>
-        <TooltipProvider>
-          <Toaster 
-            position="top-right" 
-            theme="dark" 
-            closeButton 
-            richColors 
-            visibleToasts={5}
-            toastOptions={{
-              duration: 3000,
-              className: "bg-[#1e293b] border border-[#374151] text-white",
-            }}
-          />
-          <HashRouter>
-            <div className="app-container bg-[#0c1018] min-h-screen">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </HashRouter>
-        </TooltipProvider>
+        <PayPalProvider>
+          <TooltipProvider>
+            <Toaster 
+              position="bottom-left" 
+              theme="dark" 
+              closeButton 
+              richColors 
+              visibleToasts={5}
+              toastOptions={{
+                duration: 3000,
+                className: "bg-[#1e293b] border border-[#374151] text-white",
+              }}
+            />
+            <HashRouter>
+              <div className="app-container bg-[#0c1018] min-h-screen">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </HashRouter>
+          </TooltipProvider>
+        </PayPalProvider>
       </SettingsProvider>
     </AuthProvider>
   </QueryClientProvider>

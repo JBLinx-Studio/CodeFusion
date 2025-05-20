@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PremiumFeatures } from './PremiumFeatures';
+import { PayPalSubscriptionButton } from '../paypal/PayPalSubscriptionButton';
 
 export const UserSubscriptionInfo: React.FC = () => {
   const { authState, updateUserProfile } = useAuth();
@@ -72,18 +73,12 @@ export const UserSubscriptionInfo: React.FC = () => {
       return;
     }
 
-    const action = selectedTier === 'free' || 
-      (selectedTier === 'premium' && currentTier === 'pro') 
-      ? 'downgraded to' : 'upgraded to';
-
-    updateUserProfile({ tier: selectedTier });
-    
-    toast.success(
-      `Subscription ${action} ${selectedTier}`,
-      {
-        description: `Your account has been successfully ${action} the ${selectedTier} plan.`,
-      }
-    );
+    // For free tier, no payment processing needed
+    if (selectedTier === 'free') {
+      updateUserProfile({ tier: 'free' });
+      toast.success('Downgraded to Free plan');
+    }
+    // For premium and pro, payment is handled by PayPal buttons
   };
 
   return (
@@ -151,19 +146,26 @@ export const UserSubscriptionInfo: React.FC = () => {
                   </Button>
                 ) : (
                   <PremiumFeatures feature="customThemes" requiredTier={plan.tier as 'premium' | 'pro'}>
-                    <Button
-                      className={`w-full mt-6 ${
-                        plan.disabled 
-                          ? 'bg-[#2d3748] text-[#9ca3af] cursor-not-allowed' 
-                          : plan.highlighted
-                            ? 'bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white'
-                            : 'bg-[#374151] hover:bg-[#4b5563] text-white'
-                      }`}
-                      disabled={plan.disabled}
-                      onClick={() => handlePlanChange(plan.tier as 'free' | 'premium' | 'pro')}
-                    >
-                      {plan.buttonText}
-                    </Button>
+                    <div className="w-full mt-6">
+                      {plan.disabled ? (
+                        <Button
+                          className="w-full bg-[#2d3748] text-[#9ca3af] cursor-not-allowed"
+                          disabled={true}
+                        >
+                          Current Plan
+                        </Button>
+                      ) : (
+                        <PayPalSubscriptionButton 
+                          tier={plan.tier as 'premium' | 'pro'}
+                          onSuccess={() => {
+                            toast.success(`Successfully subscribed to ${plan.name}`);
+                          }}
+                          onError={(error) => {
+                            toast.error(`Subscription error: ${error.message}`);
+                          }}
+                        />
+                      )}
+                    </div>
                   </PremiumFeatures>
                 )}
               </div>
@@ -174,10 +176,15 @@ export const UserSubscriptionInfo: React.FC = () => {
         <div className="mt-8 p-4 rounded-lg bg-[#2d3748]/50 border border-[#4b5563] flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-[#f87171] shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-sm font-medium text-white">Important Note</h4>
+            <h4 className="text-sm font-medium text-white">Testing PayPal Integration</h4>
             <p className="text-xs text-[#9ca3af] mt-1">
-              This is a demonstration of subscription capabilities. No actual payments are processed and all upgrades are simulated.
-              In a production environment, this would connect to a payment processor like Stripe or PayPal.
+              This integration uses PayPal's sandbox environment for testing. You can use the following PayPal sandbox credentials to test:
+              <br />
+              <span className="font-mono bg-[#1a1f2c] px-1 rounded">Email: sb-47nmps29800276@personal.example.com</span>
+              <br />
+              <span className="font-mono bg-[#1a1f2c] px-1 rounded">Password: M3@Y5!zi</span>
+              <br />
+              <span className="text-yellow-400">Note: No actual payments will be processed.</span>
             </p>
           </div>
         </div>
