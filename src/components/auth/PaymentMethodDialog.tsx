@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
-import { PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Check, CreditCard } from 'lucide-react';
@@ -33,6 +33,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [paypalInitialized, setPaypalInitialized] = useState(false);
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
+  const [{ isResolved, isPending }] = usePayPalScriptReducer();
 
   // Reset state when dialog opens or closes
   useEffect(() => {
@@ -42,9 +43,19 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   }, [open, resetError]);
 
+  // Handle PayPal script status
+  useEffect(() => {
+    if (isPending) {
+      console.log("PayPal script is loading...");
+    }
+    if (isResolved) {
+      console.log("PayPal script successfully loaded");
+    }
+  }, [isPending, isResolved]);
+
   const handleCreateSubscription = (data: any, actions: any) => {
     if (!selectedTier) return null;
-    
+
     try {
       console.log('Creating subscription for plan:', selectedTier);
       setPaypalInitialized(true);
@@ -53,12 +64,13 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         plan_id: selectedTier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
         application_context: {
           shipping_preference: 'NO_SHIPPING',
-          user_action: 'CONTINUE' // Ensures PayPal shows the checkout page
+          user_action: 'SUBSCRIBE_NOW'
         }
       });
     } catch (error) {
       console.error('Failed to create subscription:', error);
       handlePayPalError(error);
+      setPaypalInitialized(false);
       setIsLoading(false);
       return null;
     }
@@ -194,20 +206,27 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   </div>
                 ) : (
                   <div className="w-full overflow-hidden rounded-md">
-                    <PayPalButtons
-                      style={{ 
-                        layout: 'vertical',
-                        color: 'blue',
-                        shape: 'rect',
-                        label: 'subscribe',
-                        height: 45
-                      }}
-                      fundingSource="paypal"
-                      createSubscription={handleCreateSubscription}
-                      onApprove={handleApprove}
-                      onError={handleError}
-                      onCancel={handleCancel}
-                    />
+                    {isResolved && (
+                      <PayPalButtons
+                        style={{ 
+                          layout: 'vertical',
+                          color: 'blue',
+                          shape: 'rect',
+                          label: 'subscribe',
+                          height: 45
+                        }}
+                        createSubscription={handleCreateSubscription}
+                        onApprove={handleApprove}
+                        onError={handleError}
+                        onCancel={handleCancel}
+                      />
+                    )}
+                    {isPending && (
+                      <div className="w-full py-3 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                        <span>Loading PayPal...</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 
@@ -222,6 +241,19 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                 </Button>
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 rounded-lg bg-[#2d3748]/50 border border-[#4b5563] flex items-start gap-3">
+          <div className="text-xs text-white">
+            <p className="font-medium mb-1">Test PayPal Integration</p>
+            <p className="text-[#9ca3af]">
+              Use these sandbox test credentials:
+              <br />
+              <span className="font-mono bg-[#1a1f2c] px-1.5 py-0.5 rounded mt-1 inline-block">sb-47nmps29800276@personal.example.com</span>
+              <br />
+              <span className="font-mono bg-[#1a1f2c] px-1.5 py-0.5 rounded mt-1 inline-block">M3@Y5!zi</span>
+            </p>
           </div>
         </div>
       </DialogContent>
