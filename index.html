@@ -32,27 +32,23 @@
     </script>
     <style>
       /* Ensure code blocks are left-aligned */
-      code, pre {
-        text-align: left !important;
-      }
-      .cm-content, .cm-line {
+      .cm-editor .cm-content {
         text-align: left !important;
       }
       
-      /* Additional styles to ensure code blocks are left-to-right */
-      .CodeMirror {
-        text-align: left !important;
-        direction: ltr !important;
+      /* Custom styling for the example preview */
+      .example-preview {
+        background: linear-gradient(135deg, #111827, #1e293b);
+        padding: 20px;
+        border-radius: 8px;
+        color: #e2e8f0;
       }
       
-      /* Global text direction settings */
-      body {
-        direction: ltr;
-      }
-      
-      /* Additional alignment fixes for code elements */
-      .CodeMirror-lines, .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
-        text-align: left !important;
+      .example-code {
+        font-family: 'JetBrains Mono', monospace;
+        text-align: left;
+        white-space: pre;
+        tab-size: 2;
       }
     </style>
   </head>
