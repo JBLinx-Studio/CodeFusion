@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
-import { PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Check, CreditCard, Loader, AlertCircle } from 'lucide-react';
+import { Check, CreditCard, Loader, AlertCircle, RefreshCw } from 'lucide-react';
 import { usePayPalError } from '../paypal/usePayPalError';
 
 interface PaymentMethodDialogProps {
@@ -16,7 +16,7 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// PayPal plan IDs for sandbox environment
+// Updated plan IDs for sandbox environment - these need to be created in your PayPal dashboard
 const PLAN_IDS = {
   premium: 'P-3RX065706M3469222MYMALYQ',
   pro: 'P-5ML4271244454362PMYMALTQ',
@@ -36,6 +36,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [isProcessing, setIsProcessing] = useState(false);
   const [subscriptionStep, setSubscriptionStep] = useState<'select' | 'processing' | 'complete'>('select');
+  const [{ isLoading: isPayPalLoading, isResolved, isRejected }, paypalDispatch] = usePayPalScriptReducer();
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
@@ -48,10 +49,24 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   }, [open, resetError]);
 
+  const reloadPayPalScript = () => {
+    paypalDispatch({
+      type: 'reload',
+      value: {
+        clientId: 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH',
+        currency: 'USD',
+        intent: 'subscription',
+        vault: true,
+        components: 'buttons,funding-eligibility',
+      }
+    });
+  };
+
   const createSubscription = async (data: any, actions: any) => {
     if (!selectedTier) {
-      toast.error("Please select a subscription tier");
-      return Promise.reject(new Error('No tier selected'));
+      const error = 'Please select a subscription tier';
+      toast.error(error);
+      return Promise.reject(new Error(error));
     }
 
     console.log('Creating subscription for tier:', selectedTier);
@@ -62,6 +77,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       const planId = PLAN_IDS[selectedTier];
       console.log('Using plan ID:', planId);
 
+      if (!planId) {
+        throw new Error('Invalid subscription plan selected');
+      }
+
       return actions.subscription.create({
         plan_id: planId,
         application_context: {
@@ -69,8 +88,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           user_action: 'SUBSCRIBE_NOW',
           brand_name: 'CodeFusion',
           locale: 'en-US',
-          return_url: `${window.location.origin}/#/dashboard`,
-          cancel_url: `${window.location.origin}/#/dashboard`,
+          return_url: `${window.location.origin}/#/dashboard?subscription=success`,
+          cancel_url: `${window.location.origin}/#/dashboard?subscription=cancelled`,
         }
       });
     } catch (error) {
@@ -96,7 +115,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         status: 'active',
         createdAt: new Date().toISOString(),
         planId: PLAN_IDS[selectedTier!],
+        facilityCode: data.facilitatorAccessToken || 'N/A'
       };
+
+      console.log('Storing subscription data:', subscriptionData);
 
       // Save to localStorage for demo
       const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
@@ -224,7 +246,24 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                       <Loader className="w-5 h-5 animate-spin text-[#6366f1]" />
                       <span>Processing your subscription...</span>
                     </div>
-                  ) : (
+                  ) : isPayPalLoading ? (
+                    <div className="w-full py-4 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
+                      <Loader className="w-5 h-5 animate-spin text-[#6366f1]" />
+                      <span>Loading PayPal...</span>
+                    </div>
+                  ) : isRejected ? (
+                    <div className="w-full py-4 text-center bg-red-900/20 border border-red-500/20 text-red-400 rounded-md">
+                      <p className="mb-2">Failed to load PayPal</p>
+                      <Button 
+                        onClick={reloadPayPalScript}
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                      </Button>
+                    </div>
+                  ) : isResolved ? (
                     <div className="w-full">
                       <PayPalButtons
                         style={{ 
@@ -240,6 +279,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                         onCancel={onCancel}
                         disabled={isProcessing}
                       />
+                    </div>
+                  ) : (
+                    <div className="w-full py-4 text-center bg-[#2d3748] text-[#9ca3af] rounded-md">
+                      Initializing PayPal...
                     </div>
                   )}
                   
