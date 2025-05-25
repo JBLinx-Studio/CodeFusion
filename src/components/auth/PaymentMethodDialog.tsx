@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Check, CreditCard, Loader } from 'lucide-react';
+import { Check, CreditCard, Loader, AlertCircle } from 'lucide-react';
 import { usePayPalError } from '../paypal/usePayPalError';
 
 interface PaymentMethodDialogProps {
@@ -16,10 +16,15 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// PayPal plan IDs for the sandbox environment
+// PayPal plan IDs for sandbox environment
 const PLAN_IDS = {
   premium: 'P-3RX065706M3469222MYMALYQ',
   pro: 'P-5ML4271244454362PMYMALTQ',
+};
+
+const PLAN_PRICES = {
+  premium: '$9.99',
+  pro: '$19.99',
 };
 
 export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
@@ -29,120 +34,121 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   onSuccess
 }) => {
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
-  const [isLoading, setIsLoading] = useState(false);
-  const [paypalInitialized, setPaypalInitialized] = useState(false);
-  const [subscriptionCreated, setSubscriptionCreated] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [subscriptionStep, setSubscriptionStep] = useState<'select' | 'processing' | 'complete'>('select');
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
-  // Reset state when dialog opens or closes
+  // Reset state when dialog opens/closes
   useEffect(() => {
-    if (!open) {
-      setIsLoading(false);
-      setSubscriptionCreated(false);
+    if (open) {
+      setSubscriptionStep('select');
+      setIsProcessing(false);
       resetError();
     }
   }, [open, resetError]);
 
-  const handleCreateSubscription = (data: any, actions: any) => {
+  const createSubscription = async (data: any, actions: any) => {
     if (!selectedTier) {
-      toast.error("No subscription tier selected");
-      return null;
+      toast.error("Please select a subscription tier");
+      return Promise.reject(new Error('No tier selected'));
     }
-    
-    setIsLoading(true);
-    
+
+    console.log('Creating subscription for tier:', selectedTier);
+    setIsProcessing(true);
+    setSubscriptionStep('processing');
+
     try {
-      console.log('Creating subscription for plan:', selectedTier);
-      setPaypalInitialized(true);
-      
-      // Create the subscription with the appropriate plan ID
+      const planId = PLAN_IDS[selectedTier];
+      console.log('Using plan ID:', planId);
+
       return actions.subscription.create({
-        plan_id: selectedTier === 'premium' ? PLAN_IDS.premium : PLAN_IDS.pro,
+        plan_id: planId,
         application_context: {
           shipping_preference: 'NO_SHIPPING',
-          user_action: 'SUBSCRIBE_NOW' // Changed to SUBSCRIBE_NOW to complete the flow immediately
+          user_action: 'SUBSCRIBE_NOW',
+          brand_name: 'CodeFusion',
+          locale: 'en-US',
+          return_url: `${window.location.origin}/#/dashboard`,
+          cancel_url: `${window.location.origin}/#/dashboard`,
         }
-      }).then((orderId: string) => {
-        console.log('Subscription created with order ID:', orderId);
-        setSubscriptionCreated(true);
-        return orderId;
-      }).catch((error: any) => {
-        console.error('Failed to create subscription:', error);
-        handlePayPalError(error);
-        setIsLoading(false);
-        return null;
       });
     } catch (error) {
-      console.error('Exception creating subscription:', error);
+      console.error('Error creating subscription:', error);
       handlePayPalError(error);
-      setIsLoading(false);
-      return null;
+      setIsProcessing(false);
+      setSubscriptionStep('select');
+      return Promise.reject(error);
     }
   };
 
-  const handleApprove = async (data: any) => {
+  const onApprove = async (data: any, actions: any) => {
+    console.log('Subscription approved:', data);
+    
     try {
-      console.log('Subscription approved:', data);
+      setSubscriptionStep('complete');
       
-      if (!selectedTier) {
-        toast.error("No subscription tier selected");
-        return;
-      }
-      
-      // Store subscription data for later management
+      // Store subscription information
       const subscriptionData = {
         id: data.subscriptionID,
+        orderID: data.orderID,
         tier: selectedTier,
         status: 'active',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        planId: PLAN_IDS[selectedTier!],
       };
-      
-      // Save to localStorage for demo purposes
-      const subscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
-      subscriptions.push(subscriptionData);
-      localStorage.setItem('user_subscriptions', JSON.stringify(subscriptions));
-      
-      toast.success('Subscription successful!', {
-        description: `Thank you for subscribing to ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)}!`,
-      });
-      
-      // Update user profile with subscription details
-      updateUserProfile({
-        tier: selectedTier,
+
+      // Save to localStorage for demo
+      const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
+      const updatedSubscriptions = [...existingSubscriptions, subscriptionData];
+      localStorage.setItem('user_subscriptions', JSON.stringify(updatedSubscriptions));
+
+      // Update user profile
+      await updateUserProfile({
+        tier: selectedTier!,
         subscriptionId: data.subscriptionID
       });
-      
-      // Call the success callback which will close this dialog
-      onSuccess();
+
+      toast.success('Subscription Successful!', {
+        description: `Welcome to ${selectedTier?.charAt(0).toUpperCase()}${selectedTier?.slice(1)}! Your subscription is now active.`,
+        duration: 5000,
+      });
+
+      // Close dialog after short delay
+      setTimeout(() => {
+        onSuccess();
+        setSubscriptionStep('select');
+        setIsProcessing(false);
+      }, 2000);
+
     } catch (error) {
-      console.error('Error processing subscription:', error);
+      console.error('Error processing approved subscription:', error);
       handlePayPalError(error);
-      setIsLoading(false);
+      setIsProcessing(false);
+      setSubscriptionStep('select');
     }
   };
 
-  const handleError = (error: any) => {
-    console.error('PayPal error:', error);
+  const onError = (error: any) => {
+    console.error('PayPal subscription error:', error);
     handlePayPalError(error);
-    setIsLoading(false);
-    setPaypalInitialized(false);
+    setIsProcessing(false);
+    setSubscriptionStep('select');
   };
 
-  const handleCancel = () => {
-    toast.info('Subscription process was canceled');
-    setIsLoading(false);
-    setPaypalInitialized(false);
+  const onCancel = (data: any) => {
+    console.log('Subscription cancelled:', data);
+    toast.info('Subscription process was cancelled');
+    setIsProcessing(false);
+    setSubscriptionStep('select');
   };
 
-  // If no tier is selected, don't show the dialog
   if (!selectedTier) return null;
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
-      // Only allow closing if not currently loading
-      if (isLoading && newOpen === false) {
-        toast.info("Please wait until the payment process completes");
+      if (isProcessing && !newOpen) {
+        toast.info("Please wait for the payment to complete");
         return;
       }
       onOpenChange(newOpen);
@@ -150,115 +156,118 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       <DialogContent className="bg-[#1a1f2c] border-[#2d3748] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent">
-            Choose Payment Method
+            {subscriptionStep === 'complete' ? 'Subscription Complete!' : 'Choose Payment Method'}
           </DialogTitle>
           <DialogDescription className="text-[#9ca3af]">
-            Select how you'd like to pay for your {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} subscription
+            {subscriptionStep === 'complete' 
+              ? `Your ${selectedTier} subscription has been activated`
+              : `Subscribe to ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} plan for ${PLAN_PRICES[selectedTier]}/month`
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">
-          <RadioGroup
-            defaultValue="paypal"
-            value={paymentMethod}
-            onValueChange={(value) => setPaymentMethod(value as 'paypal' | 'creditCard')}
-            className="space-y-3"
-          >
-            <div className={`flex items-center space-x-2 rounded-lg border p-4 
-              ${paymentMethod === 'paypal' ? 'border-[#6366f1] bg-[#1f2937]' : 'border-[#2d3748]'}`}
-            >
-              <RadioGroupItem value="paypal" id="paypal" />
-              <label htmlFor="paypal" className="flex items-center justify-between w-full cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#0070ba] h-8 w-8 rounded-md flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">Pay</span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">PayPal</div>
-                    <div className="text-xs text-[#9ca3af]">Safe and easy payments</div>
-                  </div>
-                </div>
-                {paymentMethod === 'paypal' && (
-                  <Check className="h-5 w-5 text-[#6366f1]" />
-                )}
-              </label>
+        {subscriptionStep === 'complete' ? (
+          <div className="text-center py-6">
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-white" />
             </div>
-
-            <div className={`flex items-center space-x-2 rounded-lg border p-4 
-              ${paymentMethod === 'creditCard' ? 'border-[#6366f1] bg-[#1f2937]' : 'border-[#2d3748]'} opacity-50`}
+            <p className="text-green-400 font-medium">Payment Successful!</p>
+            <p className="text-[#9ca3af] text-sm mt-2">You now have access to all {selectedTier} features.</p>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <RadioGroup
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value as 'paypal' | 'creditCard')}
+              className="space-y-3"
+              disabled={isProcessing}
             >
-              <RadioGroupItem value="creditCard" id="creditCard" disabled />
-              <label htmlFor="creditCard" className="flex items-center justify-between w-full cursor-not-allowed">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#374151] h-8 w-8 rounded-md flex items-center justify-center">
-                    <CreditCard className="h-4 w-4 text-white" />
+              <div className={`flex items-center space-x-2 rounded-lg border p-4 ${
+                paymentMethod === 'paypal' ? 'border-[#6366f1] bg-[#1f2937]' : 'border-[#2d3748]'
+              } ${isProcessing ? 'opacity-50' : ''}`}>
+                <RadioGroupItem value="paypal" id="paypal" disabled={isProcessing} />
+                <label htmlFor="paypal" className="flex items-center justify-between w-full cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-[#0070ba] h-8 w-8 rounded-md flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">PP</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">PayPal</div>
+                      <div className="text-xs text-[#9ca3af]">Safe and secure payments</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium">Credit Card</div>
-                    <div className="text-xs text-[#9ca3af]">Coming soon</div>
-                  </div>
-                </div>
-                {paymentMethod === 'creditCard' && (
-                  <Check className="h-5 w-5 text-[#6366f1]" />
-                )}
-              </label>
-            </div>
-          </RadioGroup>
-
-          <div className="mt-6">
-            {paymentMethod === 'paypal' ? (
-              <div className="space-y-4">
-                <p className="text-sm text-[#9ca3af]">
-                  Click the PayPal button below to complete your {selectedTier} subscription.
-                </p>
-                
-                {isLoading ? (
-                  <div className="w-full py-3 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
-                    <Loader className="w-4 h-4 animate-spin text-[#6366f1]" />
-                    <span>Processing payment...</span>
-                  </div>
-                ) : (
-                  <div className="w-full overflow-hidden rounded-md">
-                    <PayPalButtons
-                      style={{ 
-                        layout: 'vertical',
-                        color: 'blue',
-                        shape: 'rect',
-                        label: 'subscribe',
-                        height: 45
-                      }}
-                      fundingSource="paypal"
-                      createSubscription={handleCreateSubscription}
-                      onApprove={handleApprove}
-                      onError={handleError}
-                      onCancel={handleCancel}
-                      disabled={isLoading || subscriptionCreated}
-                    />
-                  </div>
-                )}
-                
-                <div className="text-xs text-[#9ca3af] text-center">
-                  By subscribing, you agree to our Terms and Conditions
-                </div>
+                  {paymentMethod === 'paypal' && <Check className="h-5 w-5 text-[#6366f1]" />}
+                </label>
               </div>
-            ) : (
-              <div className="flex justify-center">
+
+              <div className={`flex items-center space-x-2 rounded-lg border p-4 border-[#2d3748] opacity-50`}>
+                <RadioGroupItem value="creditCard" id="creditCard" disabled />
+                <label htmlFor="creditCard" className="flex items-center justify-between w-full cursor-not-allowed">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-[#374151] h-8 w-8 rounded-md flex items-center justify-center">
+                      <CreditCard className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">Credit Card</div>
+                      <div className="text-xs text-[#9ca3af]">Coming soon</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </RadioGroup>
+
+            <div className="mt-6">
+              {paymentMethod === 'paypal' ? (
+                <div className="space-y-4">
+                  {subscriptionStep === 'processing' ? (
+                    <div className="w-full py-4 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
+                      <Loader className="w-5 h-5 animate-spin text-[#6366f1]" />
+                      <span>Processing your subscription...</span>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      <PayPalButtons
+                        style={{ 
+                          layout: 'vertical',
+                          color: 'blue',
+                          shape: 'rect',
+                          label: 'subscribe',
+                          height: 50
+                        }}
+                        createSubscription={createSubscription}
+                        onApprove={onApprove}
+                        onError={onError}
+                        onCancel={onCancel}
+                        disabled={isProcessing}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-[#9ca3af] text-center">
+                    By subscribing, you agree to our Terms of Service
+                  </div>
+                </div>
+              ) : (
                 <Button disabled className="w-full bg-[#2d3748] text-[#9ca3af] cursor-not-allowed">
                   Credit Card Coming Soon
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-4 p-3 rounded-md bg-[#2d3748]/30 border border-[#3e4a69] text-xs">
-          <h4 className="font-medium text-[#d1d5db]">Test Payment Information</h4>
-          <p className="text-[#9ca3af] mt-1">
-            This is a sandbox environment. Use these test credentials:
-          </p>
-          <div className="bg-[#1a1f2c] p-1.5 rounded mt-2 font-mono text-[10px] text-[#d1d5db]">
-            Email: sb-47nmps29800276@personal.example.com<br />
-            Password: M3@Y5!zi
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-[#d1d5db] mb-1">Sandbox Testing</h4>
+              <p className="text-[#9ca3af] mb-2">Use these PayPal sandbox credentials:</p>
+              <div className="bg-[#1a1f2c] p-2 rounded text-[#d1d5db] font-mono text-[10px]">
+                Email: sb-47nmps29800276@personal.example.com<br />
+                Password: M3@Y5!zi
+              </div>
+              <p className="text-yellow-400 mt-2">All transactions are simulated - no real charges apply</p>
+            </div>
           </div>
         </div>
       </DialogContent>
