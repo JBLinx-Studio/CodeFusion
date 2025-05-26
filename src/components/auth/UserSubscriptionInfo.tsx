@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -210,14 +209,12 @@ export const UserSubscriptionInfo: React.FC = () => {
       return;
     }
 
-    // For free tier, no payment processing needed
     if (selectedTier === 'free') {
       updateUserProfile({ tier: 'free' });
       toast.success('Downgraded to Free plan');
       return;
     }
 
-    // For team and enterprise plans, show contact info
     if (selectedTier.startsWith('team') || selectedTier === 'enterprise') {
       toast.info('Contact our sales team for team and enterprise plans', {
         description: 'Email: sales@codefusion.dev',
@@ -226,7 +223,6 @@ export const UserSubscriptionInfo: React.FC = () => {
       return;
     }
     
-    // For paid individual plans, show payment dialog
     console.log('Opening payment dialog for plan:', selectedTier);
     setSelectedPlan(selectedTier as any);
     setPaymentDialogOpen(true);
@@ -248,7 +244,7 @@ export const UserSubscriptionInfo: React.FC = () => {
                 `}>
                   {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
                 </Badge>
-              </div>
+              </CardTitle>
               <div className="flex items-center gap-4 mt-4">
                 <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)}>
                   <TabsList className="bg-[#2d3748]">
