@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
 
 interface PremiumFeaturesProps {
-  feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess';
-  requiredTier: 'premium' | 'pro';
+  feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess' | 'aiAssistant' | 'gitIntegration';
+  requiredTier: 'starter' | 'developer' | 'pro';
   children: React.ReactNode;
 }
 
@@ -25,8 +25,9 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   const tierLevel = (tier: string): number => {
     switch(tier) {
       case 'free': return 0;
-      case 'premium': return 1;
-      case 'pro': return 2;
+      case 'starter': return 1;
+      case 'developer': return 2;
+      case 'pro': return 3;
       default: return -1;
     }
   };
@@ -36,11 +37,13 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   
   const getFeatureName = (feature: string): string => {
     switch(feature) {
-      case 'collaboration': return 'Live Collaboration';
+      case 'collaboration': return 'Team Collaboration';
       case 'privateProjects': return 'Private Projects';
       case 'advancedExport': return 'Advanced Export';
       case 'customThemes': return 'Custom Themes';
       case 'apiAccess': return 'API Access';
+      case 'aiAssistant': return 'AI Code Assistant';
+      case 'gitIntegration': return 'Git Integration';
       default: return 'Premium Feature';
     }
   };
@@ -76,7 +79,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
             {getFeatureName(feature)}
           </h3>
           <p className="text-xs text-[#9ca3af] mb-3">
-            Requires {requiredTier === 'premium' ? 'Premium' : 'Pro'} plan
+            Requires {requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} plan
           </p>
           <Button
             size="sm"
@@ -100,7 +103,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
         selectedTier={requiredTier}
         onSuccess={() => {
           setShowPaymentDialog(false);
-          toast.success(`Successfully upgraded to ${requiredTier === 'premium' ? 'Premium' : 'Pro'} plan!`);
+          toast.success(`Successfully upgraded to ${requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} plan!`);
         }}
       />
     </div>

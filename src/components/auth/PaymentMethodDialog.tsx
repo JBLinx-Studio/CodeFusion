@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -12,18 +11,26 @@ import { usePayPalError } from '../paypal/usePayPalError';
 interface PaymentMethodDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedTier: 'premium' | 'pro' | null;
+  selectedTier: 'starter' | 'developer' | 'pro' | null;
   onSuccess: () => void;
 }
 
 const PLAN_IDS = {
-  premium: 'P-3RX065706M3469222MYMALYQ',
-  pro: 'P-5ML4271244454362PMYMALTQ',
+  starter: 'P-STARTER-PLAN-ID-HERE',
+  developer: 'P-DEVELOPER-PLAN-ID-HERE', 
+  pro: 'P-PRO-PLAN-ID-HERE',
 };
 
 const PLAN_PRICES = {
-  premium: '$9.99',
-  pro: '$19.99',
+  starter: '$5.00',
+  developer: '$9.00',
+  pro: '$19.00',
+};
+
+const PLAN_NAMES = {
+  starter: 'Starter',
+  developer: 'Developer', 
+  pro: 'Pro',
 };
 
 export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
@@ -134,7 +141,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       setSubscriptionStep('complete');
 
       toast.success('Payment Successful!', {
-        description: `Welcome to ${selectedTier?.charAt(0).toUpperCase()}${selectedTier?.slice(1)}! Your subscription is now active.`,
+        description: `Welcome to ${PLAN_NAMES[selectedTier!]}! Your subscription is now active.`,
         duration: 5000,
       });
 
@@ -211,12 +218,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </DialogTitle>
           <DialogDescription className="text-[#9ca3af]">
             {subscriptionStep === 'complete' 
-              ? `Your ${selectedTier} subscription has been activated`
+              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated`
               : subscriptionStep === 'error'
               ? 'There was an issue processing your payment'
               : subscriptionStep === 'processing'
               ? 'Please wait while we process your payment'
-              : `Subscribe to ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} plan for ${PLAN_PRICES[selectedTier]}/month`
+              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month`
             }
           </DialogDescription>
         </DialogHeader>
@@ -231,7 +238,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               Subscription ID: {subscriptionId?.substring(0, 15)}...
             </p>
             <p className="text-[#9ca3af] text-sm mt-1">
-              You now have access to all {selectedTier} features.
+              You now have access to all {PLAN_NAMES[selectedTier]} features.
             </p>
           </div>
         ) : subscriptionStep === 'processing' ? (
