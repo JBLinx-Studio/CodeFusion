@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, CreditCard, DollarSign, User, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, CreditCard, DollarSign, User, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SubscriptionData {
@@ -78,7 +78,7 @@ export const PayPalTransactionHistory: React.FC = () => {
       case 'expired':
         return <XCircle className="w-4 h-4" />;
       default:
-        return <AlertCircle className="w-4 h-4" />;
+        return <XCircle className="w-4 h-4" />;
     }
   };
 
@@ -87,7 +87,6 @@ export const PayPalTransactionHistory: React.FC = () => {
   };
 
   const handleCancelSubscription = (subscriptionId: string) => {
-    // In a real app, this would call PayPal's API to cancel the subscription
     toast.info('Subscription cancellation', {
       description: 'In a production environment, this would cancel your PayPal subscription.',
       duration: 5000,
@@ -206,17 +205,6 @@ export const PayPalTransactionHistory: React.FC = () => {
             ))}
           </div>
         )}
-
-        <div className="mt-6 p-4 rounded-lg bg-[#2d3748]/50 border border-[#4b5563] flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-[#f87171] shrink-0 mt-0.5" />
-          <div>
-            <h4 className="text-sm font-medium text-white">Sandbox Environment</h4>
-            <p className="text-xs text-[#9ca3af] mt-1">
-              This is a demonstration environment. All subscription data shown here is for testing purposes only.
-              In a production environment, this data would be synchronized with PayPal's subscription management system.
-            </p>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Check, CreditCard, Loader, AlertCircle, RefreshCw } from 'lucide-react';
+import { Check, CreditCard, Loader, RefreshCw } from 'lucide-react';
 import { usePayPalError } from '../paypal/usePayPalError';
 
 interface PaymentMethodDialogProps {
@@ -297,21 +297,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             </div>
           </div>
         )}
-
-        <div className="mt-4 p-3 rounded-md bg-[#2d3748]/30 border border-[#3e4a69] text-xs">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-[#d1d5db] mb-1">Sandbox Testing</h4>
-              <p className="text-[#9ca3af] mb-2">Use these PayPal sandbox credentials:</p>
-              <div className="bg-[#1a1f2c] p-2 rounded text-[#d1d5db] font-mono text-[10px]">
-                Email: sb-47nmps29800276@personal.example.com<br />
-                Password: M3@Y5!zi
-              </div>
-              <p className="text-yellow-400 mt-2">All transactions are simulated - no real charges apply</p>
-            </div>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
