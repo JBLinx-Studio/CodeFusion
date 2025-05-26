@@ -5,8 +5,6 @@ import { AuthModal } from './AuthModal';
 import { Button } from '@/components/ui/button';
 import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { UserDashboardDialog } from './UserDashboardDialog';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
 
 interface PremiumFeaturesProps {
@@ -22,9 +20,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
 }) => {
   const { authState } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const navigate = useNavigate();
   
   const tierLevel = (tier: string): number => {
     switch(tier) {
@@ -50,12 +46,15 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   };
   
   const handlePremiumClick = () => {
+    console.log('Premium click triggered, authenticated:', authState.isAuthenticated);
+    
     if (!authState.isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
     
     // Show payment dialog directly
+    console.log('Opening payment dialog for tier:', requiredTier);
     setShowPaymentDialog(true);
   };
   
@@ -93,11 +92,6 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)}
         defaultView="login"
-      />
-      
-      <UserDashboardDialog 
-        open={showDashboard}
-        onOpenChange={setShowDashboard}
       />
 
       <PaymentMethodDialog

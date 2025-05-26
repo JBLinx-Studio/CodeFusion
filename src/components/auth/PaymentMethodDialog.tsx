@@ -16,7 +16,6 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// Updated plan IDs for sandbox environment
 const PLAN_IDS = {
   premium: 'P-3RX065706M3469222MYMALYQ',
   pro: 'P-5ML4271244454362PMYMALTQ',
@@ -40,27 +39,17 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
+  console.log('PaymentMethodDialog rendered:', { open, selectedTier, subscriptionStep });
+
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
+      console.log('Payment dialog opened');
       setSubscriptionStep('select');
       setIsProcessing(false);
       resetError();
     }
   }, [open, resetError]);
-
-  const reloadPayPalScript = () => {
-    paypalDispatch({
-      type: 'resetOptions',
-      value: {
-        clientId: 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH',
-        currency: 'USD',
-        intent: 'subscription',
-        vault: true,
-        components: 'buttons,funding-eligibility',
-      }
-    });
-  };
 
   const createSubscription = async (data: any, actions: any) => {
     if (!selectedTier) {
@@ -165,14 +154,20 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     setSubscriptionStep('select');
   };
 
-  if (!selectedTier) return null;
+  if (!selectedTier) {
+    console.log('No selected tier, not rendering dialog');
+    return null;
+  }
 
   const isScriptLoading = scriptState.isPending;
   const isScriptResolved = scriptState.isResolved;
   const isScriptRejected = scriptState.isRejected;
 
+  console.log('Script state:', { isScriptLoading, isScriptResolved, isScriptRejected });
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
+      console.log('Dialog onOpenChange called:', newOpen);
       if (isProcessing && !newOpen) {
         toast.info("Please wait for the payment to complete");
         return;
@@ -259,7 +254,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     <div className="w-full py-4 text-center bg-red-900/20 border border-red-500/20 text-red-400 rounded-md">
                       <p className="mb-2">Failed to load PayPal</p>
                       <Button 
-                        onClick={reloadPayPalScript}
+                        onClick={() => window.location.reload()}
                         size="sm"
                         className="bg-red-600 hover:bg-red-700"
                       >

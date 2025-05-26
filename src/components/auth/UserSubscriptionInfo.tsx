@@ -70,7 +70,8 @@ export const UserSubscriptionInfo: React.FC = () => {
   ];
 
   const handlePlanChange = (selectedTier: 'free' | 'premium' | 'pro') => {
-    // This would normally connect to a payment processor
+    console.log('Plan change clicked for tier:', selectedTier);
+    
     if (selectedTier === currentTier) {
       return;
     }
@@ -83,6 +84,7 @@ export const UserSubscriptionInfo: React.FC = () => {
     }
     
     // For premium and pro, show payment dialog
+    console.log('Opening payment dialog for plan:', selectedTier);
     setSelectedPlan(selectedTier);
     setPaymentDialogOpen(true);
   };
@@ -185,6 +187,7 @@ export const UserSubscriptionInfo: React.FC = () => {
         onSuccess={() => {
           setPaymentDialogOpen(false);
           setSelectedPlan(null);
+          toast.success(`Successfully upgraded to ${selectedPlan === 'premium' ? 'Premium' : 'Pro'} plan!`);
         }}
       />
     </>
