@@ -13,7 +13,7 @@ interface PayPalProviderProps {
 export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const [scriptError, setScriptError] = useState(false);
 
-  // Configure PayPal options for subscriptions
+  // Configure PayPal options for sandbox subscriptions
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
@@ -22,7 +22,10 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     components: 'buttons,funding-eligibility',
     'enable-funding': 'paypal',
     'disable-funding': 'paylater,card',
-    'data-partner-attribution-id': 'CodeFusion_SP'
+    'data-partner-attribution-id': 'CodeFusion_SP',
+    // Enable sandbox mode for testing
+    'data-client-token': undefined,
+    debug: true
   };
 
   // Handle script loading errors
