@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
 
@@ -22,14 +22,23 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     components: 'buttons,funding-eligibility',
     'enable-funding': 'paypal',
     'disable-funding': 'paylater,card',
-    'data-namespace': 'CodeFusionPayPal',
   };
 
-  const handleScriptError = (error: any) => {
-    console.error('PayPal script loading error:', error);
-    setScriptError(true);
-    toast.error('PayPal services are temporarily unavailable. Please try again later.');
-  };
+  // Handle script loading errors
+  useEffect(() => {
+    const handleScriptError = () => {
+      console.error('PayPal script loading error');
+      setScriptError(true);
+      toast.error('PayPal services are temporarily unavailable. Please try again later.');
+    };
+
+    // Listen for script errors
+    window.addEventListener('error', handleScriptError);
+    
+    return () => {
+      window.removeEventListener('error', handleScriptError);
+    };
+  }, []);
 
   if (scriptError) {
     return <>{children}</>;
@@ -39,7 +48,6 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     <PayPalScriptProvider 
       options={paypalOptions} 
       deferLoading={false}
-      onError={handleScriptError}
     >
       {children}
     </PayPalScriptProvider>

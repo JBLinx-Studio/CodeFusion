@@ -16,7 +16,7 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// Updated plan IDs for sandbox environment - these need to be created in your PayPal dashboard
+// Updated plan IDs for sandbox environment
 const PLAN_IDS = {
   premium: 'P-3RX065706M3469222MYMALYQ',
   pro: 'P-5ML4271244454362PMYMALTQ',
@@ -36,7 +36,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [isProcessing, setIsProcessing] = useState(false);
   const [subscriptionStep, setSubscriptionStep] = useState<'select' | 'processing' | 'complete'>('select');
-  const [{ isLoading: isPayPalLoading, isResolved, isRejected }, paypalDispatch] = usePayPalScriptReducer();
+  const [scriptState, paypalDispatch] = usePayPalScriptReducer();
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
@@ -51,7 +51,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
   const reloadPayPalScript = () => {
     paypalDispatch({
-      type: 'reload',
+      type: 'resetOptions',
       value: {
         clientId: 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH',
         currency: 'USD',
@@ -167,6 +167,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
   if (!selectedTier) return null;
 
+  const isScriptLoading = scriptState.isPending;
+  const isScriptResolved = scriptState.isResolved;
+  const isScriptRejected = scriptState.isRejected;
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (isProcessing && !newOpen) {
@@ -246,12 +250,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                       <Loader className="w-5 h-5 animate-spin text-[#6366f1]" />
                       <span>Processing your subscription...</span>
                     </div>
-                  ) : isPayPalLoading ? (
+                  ) : isScriptLoading ? (
                     <div className="w-full py-4 text-center bg-[#2d3748] text-[#9ca3af] rounded-md flex items-center justify-center space-x-2">
                       <Loader className="w-5 h-5 animate-spin text-[#6366f1]" />
                       <span>Loading PayPal...</span>
                     </div>
-                  ) : isRejected ? (
+                  ) : isScriptRejected ? (
                     <div className="w-full py-4 text-center bg-red-900/20 border border-red-500/20 text-red-400 rounded-md">
                       <p className="mb-2">Failed to load PayPal</p>
                       <Button 
@@ -263,7 +267,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                         Retry
                       </Button>
                     </div>
-                  ) : isResolved ? (
+                  ) : isScriptResolved ? (
                     <div className="w-full">
                       <PayPalButtons
                         style={{ 

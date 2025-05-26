@@ -68,10 +68,6 @@ export const usePayPalError = () => {
     toast.error('Payment Error', {
       description: message.length > 100 ? message.substring(0, 100) + '...' : message,
       duration: 6000,
-      action: {
-        label: 'Dismiss',
-        onClick: () => resetError(),
-      },
     });
     
     return message;
