@@ -62,7 +62,7 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       return;
     }
     
-    if (requiredTier.startsWith('team') || requiredTier === 'enterprise') {
+    if (requiredTier.startsWith('team')) {
       toast.info('Contact our sales team for team plans', {
         description: 'Email: sales@codefusion.dev',
         duration: 6000,

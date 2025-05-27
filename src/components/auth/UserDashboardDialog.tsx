@@ -22,7 +22,7 @@ export const UserDashboardDialog: React.FC<UserDashboardDialogProps> = ({
   onOpenChange 
 }) => {
   const { authState } = useAuth();
-  const isPaidUser = authState.user?.tier === 'premium' || authState.user?.tier === 'pro';
+  const isPaidUser = authState.user?.tier !== 'free';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
