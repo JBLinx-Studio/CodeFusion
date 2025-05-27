@@ -10,11 +10,13 @@ export const individualPlans = [
       '3 public projects',
       '100 MB storage',
       'Community support',
-      'Basic editor',
-      '5 monthly deploys'
+      'Basic code editor',
+      '5 monthly deploys',
+      'Standard templates'
     ],
     buttonText: 'Get Started Free',
     popular: false,
+    highlight: 'Great for beginners',
   },
   {
     name: 'Starter',
@@ -29,10 +31,13 @@ export const individualPlans = [
       'Email support',
       'Custom domains (1)',
       '25 monthly deploys',
-      'Premium templates'
+      'Premium templates',
+      'Basic AI assistance',
+      'Export projects'
     ],
     buttonText: 'Start Building',
     popular: false,
+    highlight: 'Most popular for individuals',
   },
   {
     name: 'Developer',
@@ -44,14 +49,17 @@ export const individualPlans = [
     features: [
       'Everything in Starter',
       '10 GB storage',
-      'AI code assistant',
-      'Git integration',
+      'Advanced AI code assistant',
+      'Git integration & sync',
       'Custom domains (5)',
       '100 monthly deploys',
-      'Priority support'
+      'Priority support',
+      'Advanced analytics',
+      'Custom integrations'
     ],
     buttonText: 'Go Professional',
     popular: true,
+    highlight: 'Best value for professionals',
   },
   {
     name: 'Pro',
@@ -64,13 +72,16 @@ export const individualPlans = [
       'Everything in Developer',
       '50 GB storage',
       'Unlimited deploys',
-      'White-label option',
+      'White-label options',
       'Custom domains (unlimited)',
-      'Advanced analytics',
-      '24/7 priority support'
+      'Advanced analytics & insights',
+      '24/7 priority support',
+      'Custom AI training',
+      'Enterprise integrations'
     ],
     buttonText: 'Scale Up',
     popular: false,
+    highlight: 'Maximum power & flexibility',
   }
 ];
 
@@ -87,12 +98,15 @@ export const teamPlans = [
       '5 team members',
       '25 GB shared storage',
       'Team project management',
-      'Shared components',
-      'Team analytics'
+      'Shared component library',
+      'Team analytics dashboard',
+      'Role-based permissions',
+      'Slack integration'
     ],
     buttonText: 'Start Collaborating',
     userCount: '5 users',
     popular: false,
+    highlight: 'Perfect for small teams',
   },
   {
     name: 'Team Pro',
@@ -107,11 +121,14 @@ export const teamPlans = [
       '100 GB shared storage',
       'Advanced permissions',
       'Custom workflows',
-      'Dedicated support'
+      'Team training sessions',
+      'Dedicated account manager',
+      'Advanced integrations'
     ],
     buttonText: 'Boost Productivity',
     userCount: '15 users',
     popular: true,
+    highlight: 'Most popular for teams',
   },
   {
     name: 'Enterprise',
@@ -123,12 +140,15 @@ export const teamPlans = [
       'Unlimited team members',
       'Unlimited storage',
       'Custom integrations',
-      'SSO & compliance',
-      'Dedicated manager',
-      '24/7 phone support'
+      'SSO & compliance (SAML)',
+      'Dedicated infrastructure',
+      'SLA guarantees',
+      '24/7 phone support',
+      'Custom onboarding'
     ],
     buttonText: 'Contact Sales',
     userCount: 'Unlimited',
     popular: false,
+    highlight: 'Enterprise-grade security',
   }
 ];

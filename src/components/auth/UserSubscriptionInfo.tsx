@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Users, Crown, Zap, Check } from 'lucide-react';
+import { Star, Users, Crown, Zap, Check, Shield, Rocket, Award } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
 import { PlanCard } from './subscription/PlanCard';
@@ -41,7 +41,7 @@ export const UserSubscriptionInfo: React.FC = () => {
     const selectedLevel = getTierLevel(selectedTier);
     
     if (selectedLevel < currentLevel && currentLevel > 0) {
-      toast.info('To downgrade your plan, please contact support', {
+      toast.info('To modify your plan, please contact our support team', {
         description: 'Email: support@codefusion.dev',
         duration: 6000,
       });
@@ -81,13 +81,16 @@ export const UserSubscriptionInfo: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-gradient-to-br from-[#0c1018] via-[#1a1f2c] to-[#0c1018] border-[#2d3748] shadow-2xl">
+      <Card className="bg-gradient-to-br from-[#0c1018] via-[#1a1f2c] to-[#0c1018] border-[#2d3748] shadow-2xl overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-[#1a1f2c] via-[#2d3748] to-[#1a1f2c] border-b border-[#3a4553] pb-8">
           <div className="text-center">
-            <CardTitle className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-              <div className="p-3 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-xl">
-                <Crown className="w-8 h-8 text-white" />
+            <div className="flex justify-center mb-6">
+              <div className="p-4 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-2xl">
+                <Crown className="w-12 h-12 text-white" />
               </div>
+            </div>
+            
+            <CardTitle className="text-4xl font-bold text-white mb-4">
               Choose Your Plan
             </CardTitle>
             
@@ -99,42 +102,46 @@ export const UserSubscriptionInfo: React.FC = () => {
                 currentTier === 'pro' ? 'border-indigo-500 text-indigo-400 bg-indigo-900/20' :
                 'border-green-500 text-green-400 bg-green-900/20'
               }`}>
+                <Crown className="w-4 h-4 mr-2" />
                 Current: {currentTier === 'team-starter' ? 'Team Starter' :
                          currentTier === 'team-pro' ? 'Team Pro' :
                          currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
               </Badge>
             </div>
 
-            <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="mb-6">
-              <TabsList className="bg-[#1a1f2c] border border-[#3a4553] p-1">
-                <TabsTrigger value="monthly" className="text-white data-[state=active]:bg-[#6366f1] px-6 py-2">
+            <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)} className="mb-8">
+              <TabsList className="bg-[#1a1f2c] border border-[#3a4553] p-1 rounded-xl">
+                <TabsTrigger value="monthly" className="text-white data-[state=active]:bg-[#6366f1] px-6 py-3 rounded-lg font-medium">
                   Monthly
                 </TabsTrigger>
-                <TabsTrigger value="annual" className="text-white data-[state=active]:bg-[#6366f1] px-6 py-2">
+                <TabsTrigger value="annual" className="text-white data-[state=active]:bg-[#6366f1] px-6 py-3 rounded-lg font-medium">
                   Annual
-                  <Badge className="ml-2 bg-green-600 text-white text-xs px-2 py-1">
+                  <Badge className="ml-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">
                     Save up to 25%
                   </Badge>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            <CardDescription className="text-[#9ca3af] text-xl max-w-3xl mx-auto leading-relaxed">
-              Professional development tools that scale with your ambitions. 
+            <CardDescription className="text-[#9ca3af] text-xl max-w-4xl mx-auto leading-relaxed">
+              Professional development tools that scale with your ambitions
               <br />
-              <span className="text-green-400 font-medium">Cancel anytime • No hidden fees • 30-day money-back guarantee</span>
+              <span className="text-green-400 font-medium flex items-center justify-center gap-2 mt-2">
+                <Shield className="w-4 h-4" />
+                30-day money-back guarantee • Cancel anytime • No hidden fees
+              </span>
             </CardDescription>
           </div>
         </CardHeader>
 
         <CardContent className="p-8">
           <Tabs defaultValue="individual" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-[#2d3748] mb-12 h-14">
-              <TabsTrigger value="individual" className="text-white text-lg flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-2 bg-[#2d3748] mb-12 h-16 rounded-xl">
+              <TabsTrigger value="individual" className="text-white text-lg flex items-center gap-2 py-3">
                 <Star className="w-5 h-5" />
                 Individual Plans
               </TabsTrigger>
-              <TabsTrigger value="team" className="text-white text-lg flex items-center gap-2">
+              <TabsTrigger value="team" className="text-white text-lg flex items-center gap-2 py-3">
                 <Users className="w-5 h-5" />
                 Team Plans
               </TabsTrigger>
@@ -169,25 +176,41 @@ export const UserSubscriptionInfo: React.FC = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-12 p-8 bg-gradient-to-r from-[#1f2937] via-[#374151] to-[#1f2937] rounded-2xl border border-[#4b5563]">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-                <Zap className="w-6 h-6 text-[#6366f1]" />
-                Why CodeFusion?
+          {/* Value Proposition Section */}
+          <div className="mt-16 p-8 bg-gradient-to-r from-[#1f2937] via-[#374151] to-[#1f2937] rounded-2xl border border-[#4b5563]">
+            <div className="text-center mb-8">
+              <h3 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+                <Rocket className="w-8 h-8 text-[#6366f1]" />
+                Why Choose CodeFusion?
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
-                <div className="flex items-center gap-3 text-[#d1d5db]">
-                  <Check className="w-5 h-5 text-green-400" />
-                  <span>More storage at better prices</span>
+              <p className="text-[#9ca3af] text-lg max-w-2xl mx-auto">
+                Join thousands of developers building the next generation of web applications
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-lg">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-8 h-8 text-white" />
                 </div>
-                <div className="flex items-center gap-3 text-[#d1d5db]">
-                  <Check className="w-5 h-5 text-green-400" />
-                  <span>AI-powered development</span>
+                <h4 className="text-white font-semibold mb-2">Lightning Fast</h4>
+                <p className="text-[#d1d5db] text-sm">AI-powered development that's 10x faster than traditional coding</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-[#10b981] to-[#059669] rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-white" />
                 </div>
-                <div className="flex items-center gap-3 text-[#d1d5db]">
-                  <Check className="w-5 h-5 text-green-400" />
-                  <span>Enterprise-grade collaboration</span>
+                <h4 className="text-white font-semibold mb-2">Enterprise Security</h4>
+                <p className="text-[#d1d5db] text-sm">Bank-grade security with SOC 2 compliance and data encryption</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-[#f59e0b] to-[#d97706] rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Award className="w-8 h-8 text-white" />
                 </div>
+                <h4 className="text-white font-semibold mb-2">Award Winning</h4>
+                <p className="text-[#d1d5db] text-sm">Recognized by industry leaders for innovation and excellence</p>
               </div>
             </div>
           </div>
