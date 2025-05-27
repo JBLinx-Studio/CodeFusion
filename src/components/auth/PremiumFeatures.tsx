@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
 
 interface PremiumFeaturesProps {
-  feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess' | 'aiAssistant' | 'gitIntegration';
-  requiredTier: 'starter' | 'developer' | 'pro';
+  feature: 'collaboration' | 'privateProjects' | 'advancedExport' | 'customThemes' | 'apiAccess' | 'aiAssistant' | 'gitIntegration' | 'whiteLabel' | 'analytics' | 'customDomains';
+  requiredTier: 'starter' | 'developer' | 'pro' | 'team-starter' | 'team-pro';
   children: React.ReactNode;
 }
 
@@ -23,29 +23,35 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   
   const tierLevel = (tier: string): number => {
-    switch(tier) {
-      case 'free': return 0;
-      case 'starter': return 1;
-      case 'developer': return 2;
-      case 'pro': return 3;
-      default: return -1;
-    }
+    const levels = {
+      'free': 0,
+      'starter': 1,
+      'developer': 2,
+      'pro': 3,
+      'team-starter': 4,
+      'team-pro': 5,
+      'enterprise': 6
+    };
+    return levels[tier as keyof typeof levels] || 0;
   };
   
   const userTier = authState.user?.tier || 'free';
   const hasAccess = tierLevel(userTier) >= tierLevel(requiredTier);
   
   const getFeatureName = (feature: string): string => {
-    switch(feature) {
-      case 'collaboration': return 'Team Collaboration';
-      case 'privateProjects': return 'Private Projects';
-      case 'advancedExport': return 'Advanced Export';
-      case 'customThemes': return 'Custom Themes';
-      case 'apiAccess': return 'API Access';
-      case 'aiAssistant': return 'AI Code Assistant';
-      case 'gitIntegration': return 'Git Integration';
-      default: return 'Premium Feature';
-    }
+    const names = {
+      collaboration: 'Team Collaboration',
+      privateProjects: 'Private Projects',
+      advancedExport: 'Advanced Export',
+      customThemes: 'Custom Themes',
+      apiAccess: 'API Access',
+      aiAssistant: 'AI Code Assistant',
+      gitIntegration: 'Git Integration',
+      whiteLabel: 'White Label',
+      analytics: 'Advanced Analytics',
+      customDomains: 'Custom Domains'
+    };
+    return names[feature as keyof typeof names] || 'Premium Feature';
   };
   
   const handlePremiumClick = () => {
@@ -56,7 +62,14 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       return;
     }
     
-    // Show payment dialog directly
+    if (requiredTier.startsWith('team') || requiredTier === 'enterprise') {
+      toast.info('Contact our sales team for team plans', {
+        description: 'Email: sales@codefusion.dev',
+        duration: 6000,
+      });
+      return;
+    }
+    
     console.log('Opening payment dialog for tier:', requiredTier);
     setShowPaymentDialog(true);
   };
@@ -70,23 +83,27 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       <div className="opacity-50 pointer-events-none">
         {children}
       </div>
-      <div className="absolute inset-0 bg-[#1a1f2c]/60 backdrop-blur-sm flex flex-col items-center justify-center">
-        <div className="p-4 rounded-lg text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Lock className="h-5 w-5 text-[#6366f1]" />
+      <div className="absolute inset-0 bg-[#1a1f2c]/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg border border-[#6366f1]/20">
+        <div className="p-6 rounded-lg text-center bg-gradient-to-b from-[#1a1f2c] to-[#1f2937] border border-[#2d3748]">
+          <div className="flex items-center justify-center mb-3">
+            <div className="p-2 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-full">
+              <Lock className="h-5 w-5 text-white" />
+            </div>
           </div>
-          <h3 className="text-sm font-medium text-white mb-2">
+          <h3 className="text-lg font-semibold text-white mb-2">
             {getFeatureName(feature)}
           </h3>
-          <p className="text-xs text-[#9ca3af] mb-3">
-            Requires {requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} plan
+          <p className="text-sm text-[#9ca3af] mb-4">
+            Requires {requiredTier === 'team-starter' ? 'Team Starter' : 
+                     requiredTier === 'team-pro' ? 'Team Pro' :
+                     requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} plan or higher
           </p>
           <Button
             size="sm"
-            className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+            className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
             onClick={handlePremiumClick}
           >
-            {authState.isAuthenticated ? 'Upgrade Plan' : 'Sign In'}
+            {authState.isAuthenticated ? 'Upgrade Plan' : 'Sign In to Continue'}
           </Button>
         </div>
       </div>
@@ -100,10 +117,12 @@ export const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
       <PaymentMethodDialog
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
-        selectedTier={requiredTier}
+        selectedTier={requiredTier as any}
         onSuccess={() => {
           setShowPaymentDialog(false);
-          toast.success(`Successfully upgraded to ${requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} plan!`);
+          const planName = requiredTier === 'starter' ? 'Starter' : 
+                          requiredTier === 'developer' ? 'Developer' : 'Pro';
+          toast.success(`Successfully upgraded to ${planName} plan!`);
         }}
       />
     </div>

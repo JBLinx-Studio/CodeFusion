@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, Star, Crown, Users } from 'lucide-react';
+import { Check, Star, Crown, Users, Zap, Shield, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
 
@@ -12,7 +12,7 @@ export const UserSubscriptionInfo: React.FC = () => {
   const { authState, updateUserProfile } = useAuth();
   const currentTier = authState.user?.tier || 'free';
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'starter' | 'developer' | 'pro' | 'team' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'starter' | 'developer' | 'pro' | 'team-starter' | 'team-pro' | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
   const individualPlans = [
@@ -20,20 +20,22 @@ export const UserSubscriptionInfo: React.FC = () => {
       name: 'Free',
       price: '$0',
       period: 'forever',
-      description: 'Perfect for learning and personal projects',
+      description: 'Perfect for learning and trying out CodeFusion',
       features: [
-        'Unlimited public projects',
-        '100 MB storage',
+        '3 public projects',
+        '500 MB storage',
         'Community support',
         'Basic code editor',
         'Live preview',
         '5 deployments per month',
         'CodeFusion branding',
+        'Basic templates'
       ],
-      buttonText: 'Current Plan',
+      buttonText: currentTier === 'free' ? 'Current Plan' : 'Downgrade to Free',
       disabled: currentTier === 'free',
       tier: 'free',
       popular: false,
+      icon: <Globe className="w-5 h-5" />
     },
     {
       name: 'Starter',
@@ -46,18 +48,19 @@ export const UserSubscriptionInfo: React.FC = () => {
         'Everything in Free',
         'Unlimited private projects',
         '2 GB storage',
-        '20 MB per file',
-        'Custom themes',
-        'No ads',
-        'Priority support',
+        '10 MB per file',
+        'Remove CodeFusion branding',
+        'Email support',
         '25 deployments per month',
         'Custom domains (1)',
         'Basic analytics',
+        'Premium templates'
       ],
       buttonText: currentTier === 'starter' ? 'Current Plan' : 'Upgrade to Starter',
       disabled: currentTier === 'starter',
       tier: 'starter',
       popular: false,
+      icon: <Star className="w-5 h-5" />
     },
     {
       name: 'Developer',
@@ -69,21 +72,21 @@ export const UserSubscriptionInfo: React.FC = () => {
       features: [
         'Everything in Starter',
         '10 GB storage',
-        '50 MB per file',
-        'Advanced code editor',
-        'AI code assistant',
+        '25 MB per file',
+        'Advanced code editor features',
+        'Code collaboration (3 users)',
         'Git integration',
         '100 deployments per month',
         'Custom domains (5)',
         'Advanced analytics',
-        'API access',
-        'White-label option',
-        'Email support',
+        'API webhook notifications',
+        'Priority email support'
       ],
       buttonText: currentTier === 'developer' ? 'Current Plan' : 'Upgrade to Developer',
       disabled: currentTier === 'developer',
       tier: 'developer',
       popular: true,
+      icon: <Zap className="w-5 h-5" />
     },
     {
       name: 'Pro',
@@ -91,7 +94,7 @@ export const UserSubscriptionInfo: React.FC = () => {
       annualPrice: 180,
       savings: 48,
       period: billingCycle === 'monthly' ? 'per month' : 'per year',
-      description: 'For power users and agencies',
+      description: 'For power users and small agencies',
       features: [
         'Everything in Developer',
         '50 GB storage',
@@ -99,17 +102,18 @@ export const UserSubscriptionInfo: React.FC = () => {
         'Unlimited deployments',
         'Custom domains (unlimited)',
         'Advanced collaboration (10 users)',
-        'Priority AI processing',
-        'Custom branding',
+        'White-label option',
+        'Priority support (24h response)',
         'Advanced security features',
-        'Phone support',
-        'SLA guarantee',
-        'Export to popular platforms',
+        'Custom CSS themes',
+        'Export projects',
+        'Backup & restore'
       ],
       buttonText: currentTier === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
       disabled: currentTier === 'pro',
       tier: 'pro',
       popular: false,
+      icon: <Shield className="w-5 h-5" />
     }
   ];
 
@@ -127,15 +131,18 @@ export const UserSubscriptionInfo: React.FC = () => {
         '25 GB shared storage',
         'Team project management',
         'Shared component library',
-        'Team analytics',
+        'Team analytics dashboard',
         'Centralized billing',
-        'Admin controls',
+        'Basic admin controls',
         'Team chat integration',
+        'Shared templates'
       ],
-      buttonText: 'Get Team Starter',
+      buttonText: currentTier === 'team-starter' ? 'Current Plan' : 'Get Team Starter',
+      disabled: currentTier === 'team-starter',
       tier: 'team-starter',
       userCount: '5 users',
       popular: false,
+      icon: <Users className="w-5 h-5" />
     },
     {
       name: 'Team Pro',
@@ -152,14 +159,17 @@ export const UserSubscriptionInfo: React.FC = () => {
         'Role-based permissions',
         'Advanced team analytics',
         'Custom workflows',
-        'Integration APIs',
-        'Priority support',
-        'Custom onboarding',
+        'API integrations',
+        'Priority support (12h response)',
+        'Custom onboarding session',
+        'Team training resources'
       ],
-      buttonText: 'Get Team Pro',
+      buttonText: currentTier === 'team-pro' ? 'Current Plan' : 'Get Team Pro',
+      disabled: currentTier === 'team-pro',
       tier: 'team-pro',
       userCount: '15 users',
       popular: true,
+      icon: <Crown className="w-5 h-5" />
     },
     {
       name: 'Enterprise',
@@ -173,15 +183,19 @@ export const UserSubscriptionInfo: React.FC = () => {
         'Single Sign-On (SSO)',
         'Advanced security & compliance',
         'Dedicated account manager',
-        'Custom training',
+        'Custom training program',
         '24/7 phone support',
-        'Custom SLA',
+        'Custom SLA agreement',
         'On-premise deployment option',
+        'Advanced audit logs',
+        'Custom contracts & invoicing'
       ],
-      buttonText: 'Contact Sales',
+      buttonText: currentTier === 'enterprise' ? 'Current Plan' : 'Contact Sales',
+      disabled: currentTier === 'enterprise',
       tier: 'enterprise',
       userCount: 'Unlimited',
       popular: false,
+      icon: <Shield className="w-5 h-5" />
     }
   ];
 
@@ -202,6 +216,19 @@ export const UserSubscriptionInfo: React.FC = () => {
     return null;
   };
 
+  const getTierLevel = (tier: string): number => {
+    const levels = {
+      'free': 0,
+      'starter': 1, 
+      'developer': 2,
+      'pro': 3,
+      'team-starter': 4,
+      'team-pro': 5,
+      'enterprise': 6
+    };
+    return levels[tier as keyof typeof levels] || 0;
+  };
+
   const handlePlanChange = (selectedTier: string) => {
     console.log('Plan change clicked for tier:', selectedTier);
     
@@ -209,16 +236,29 @@ export const UserSubscriptionInfo: React.FC = () => {
       return;
     }
 
-    if (selectedTier === 'free') {
-      updateUserProfile({ tier: 'free' });
-      toast.success('Downgraded to Free plan');
+    // Validate tier progression - prevent downgrades without confirmation for paid plans
+    const currentLevel = getTierLevel(currentTier);
+    const selectedLevel = getTierLevel(selectedTier);
+    
+    if (selectedLevel < currentLevel && currentLevel > 0) {
+      // This is a downgrade from a paid plan
+      toast.info('To downgrade your plan, please contact support', {
+        description: 'Email: support@codefusion.dev',
+        duration: 6000,
+      });
       return;
     }
 
-    if (selectedTier.startsWith('team') || selectedTier === 'enterprise') {
-      toast.info('Contact our sales team for team and enterprise plans', {
-        description: 'Email: sales@codefusion.dev',
-        duration: 6000,
+    if (selectedTier === 'free') {
+      updateUserProfile({ tier: 'free' });
+      toast.success('Welcome to Free plan');
+      return;
+    }
+
+    if (selectedTier === 'enterprise') {
+      toast.info('Contact our sales team for Enterprise plans', {
+        description: 'Email: enterprise@codefusion.dev | Phone: +1 (555) 123-4567',
+        duration: 8000,
       });
       return;
     }
@@ -230,36 +270,46 @@ export const UserSubscriptionInfo: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-[#1a1f2c] border-[#2d3748] shadow-lg">
-        <CardHeader>
+      <Card className="bg-gradient-to-br from-[#1a1f2c] via-[#1e2530] to-[#1a1f2c] border-[#2d3748] shadow-2xl">
+        <CardHeader className="bg-gradient-to-r from-[#2d3748] to-[#374151] border-b border-[#3a4553]">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl text-white flex items-center gap-2">
+              <CardTitle className="text-3xl text-white flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-lg">
+                  <Crown className="w-6 h-6 text-white" />
+                </div>
                 <span>Choose Your Plan</span>
-                <Badge variant="outline" className={`
-                  ${currentTier === 'free' ? 'border-gray-500 text-gray-400' : 
-                    currentTier === 'starter' ? 'border-blue-500 text-blue-400' :
-                    currentTier === 'developer' ? 'border-purple-500 text-purple-400' : 
-                    'border-indigo-500 text-indigo-400'}
-                `}>
-                  {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
+                <Badge variant="outline" className={`px-3 py-1 text-sm font-semibold ${
+                  currentTier === 'free' ? 'border-gray-500 text-gray-400 bg-gray-900/50' : 
+                  currentTier === 'starter' ? 'border-blue-500 text-blue-400 bg-blue-900/20' :
+                  currentTier === 'developer' ? 'border-purple-500 text-purple-400 bg-purple-900/20' : 
+                  currentTier === 'pro' ? 'border-indigo-500 text-indigo-400 bg-indigo-900/20' :
+                  'border-green-500 text-green-400 bg-green-900/20'
+                }`}>
+                  {currentTier === 'team-starter' ? 'Team Starter' :
+                   currentTier === 'team-pro' ? 'Team Pro' :
+                   currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
                 </Badge>
               </CardTitle>
-              <div className="flex items-center gap-4 mt-4">
+              <div className="flex items-center gap-4">
                 <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as any)}>
-                  <TabsList className="bg-[#2d3748]">
-                    <TabsTrigger value="monthly" className="text-white">Monthly</TabsTrigger>
-                    <TabsTrigger value="annual" className="text-white">
+                  <TabsList className="bg-[#1a1f2c] border border-[#3a4553]">
+                    <TabsTrigger value="monthly" className="text-white data-[state=active]:bg-[#6366f1]">
+                      Monthly
+                    </TabsTrigger>
+                    <TabsTrigger value="annual" className="text-white data-[state=active]:bg-[#6366f1]">
                       Annual
-                      <Badge className="ml-2 bg-green-600 text-white text-xs">Save up to 25%</Badge>
+                      <Badge className="ml-2 bg-green-600 text-white text-xs px-2 py-1">
+                        Save up to 25%
+                      </Badge>
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
             </div>
           </div>
-          <CardDescription className="text-[#9ca3af] text-lg">
-            Plans that scale with your ambitions. No hidden fees, cancel anytime.
+          <CardDescription className="text-[#9ca3af] text-lg mt-4">
+            Professional plans that scale with your ambitions. Cancel anytime, no hidden fees.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -424,7 +474,15 @@ export const UserSubscriptionInfo: React.FC = () => {
         onSuccess={() => {
           setPaymentDialogOpen(false);
           setSelectedPlan(null);
-          toast.success(`Successfully upgraded to ${selectedPlan === 'starter' ? 'Starter' : selectedPlan === 'developer' ? 'Developer' : 'Pro'} plan!`);
+          const planName = selectedPlan === 'starter' ? 'Starter' : 
+                          selectedPlan === 'developer' ? 'Developer' : 
+                          selectedPlan === 'pro' ? 'Pro' :
+                          selectedPlan === 'team-starter' ? 'Team Starter' :
+                          'Team Pro';
+          toast.success(`Successfully upgraded to ${planName} plan!`, {
+            description: 'All features are now available in your account.',
+            duration: 5000,
+          });
         }}
       />
     </>

@@ -1,10 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { initializeGoogleClient, GOOGLE_CLIENT_ID, parseGoogleJwt } from '@/utils/googleAuth';
 
 // Define user types and auth state
-export type UserTier = 'free' | 'premium' | 'pro';
+export type UserTier = 'free' | 'starter' | 'developer' | 'pro' | 'team-starter' | 'team-pro' | 'enterprise';
 
 export interface User {
   id: string;

@@ -11,26 +11,32 @@ import { usePayPalError } from '../paypal/usePayPalError';
 interface PaymentMethodDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedTier: 'starter' | 'developer' | 'pro' | null;
+  selectedTier: 'starter' | 'developer' | 'pro' | 'team-starter' | 'team-pro' | null;
   onSuccess: () => void;
 }
 
 const PLAN_IDS = {
-  starter: 'P-STARTER-PLAN-ID-HERE',
-  developer: 'P-DEVELOPER-PLAN-ID-HERE', 
-  pro: 'P-PRO-PLAN-ID-HERE',
+  starter: 'P-CODEFUSION-STARTER-MONTHLY-2024',
+  developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024', 
+  pro: 'P-CODEFUSION-PRO-MONTHLY-2024',
+  'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024',
+  'team-pro': 'P-CODEFUSION-TEAM-PRO-MONTHLY-2024',
 };
 
 const PLAN_PRICES = {
   starter: '$5.00',
   developer: '$9.00',
   pro: '$19.00',
+  'team-starter': '$15.00',
+  'team-pro': '$35.00',
 };
 
 const PLAN_NAMES = {
   starter: 'Starter',
   developer: 'Developer', 
   pro: 'Pro',
+  'team-starter': 'Team Starter',
+  'team-pro': 'Team Pro',
 };
 
 export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
@@ -108,11 +114,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     try {
       setSubscriptionStep('processing');
       
-      // Capture the subscription details
       const details = await actions.subscription.get();
       console.log('Subscription details:', details);
       
-      // Store subscription information
       const subscriptionData = {
         id: data.subscriptionID,
         orderID: data.orderID,
@@ -126,12 +130,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
       console.log('Storing subscription data:', subscriptionData);
 
-      // Save to localStorage for demo
       const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
       const updatedSubscriptions = [...existingSubscriptions, subscriptionData];
       localStorage.setItem('user_subscriptions', JSON.stringify(updatedSubscriptions));
 
-      // Update user profile
       await updateUserProfile({
         tier: selectedTier!,
         subscriptionId: data.subscriptionID
@@ -145,7 +147,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         duration: 5000,
       });
 
-      // Auto-close after 3 seconds
       setTimeout(() => {
         onSuccess();
         setSubscriptionStep('select');
