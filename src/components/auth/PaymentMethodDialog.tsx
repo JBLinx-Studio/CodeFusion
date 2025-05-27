@@ -16,7 +16,7 @@ interface PaymentMethodDialogProps {
 }
 
 const PLAN_IDS = {
-  starter: 'P-CODEFUSION-STARTER-MONTHLY-2024',
+  starter: 'P-9GJ74476BD483620ENA2XHZA', // Real PayPal Plan ID
   developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024', 
   pro: 'P-CODEFUSION-PRO-MONTHLY-2024',
   'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024',
