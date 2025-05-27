@@ -2,40 +2,80 @@
 // Google authentication utility functions
 export const GOOGLE_CLIENT_ID = '995504384402-h01e6d91m1l0gem7m6c2ejrp3f4hdr84.apps.googleusercontent.com';
 
-// Load the Google API script dynamically
-export const loadGoogleScript = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
+// Check if Google services are available
+export const isGoogleAvailable = (): boolean => {
+  return !!(window.google && window.google.accounts && window.google.accounts.id);
+};
+
+// Load the Google API script dynamically with better error handling
+export const loadGoogleScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    // Check if already loaded
     if (document.getElementById('google-auth-script')) {
-      resolve();
+      console.log('Google script already exists, checking availability...');
+      setTimeout(() => resolve(isGoogleAvailable()), 100);
       return;
     }
 
+    console.log('Loading Google authentication script...');
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.id = 'google-auth-script';
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = (error) => reject(error);
+    
+    let timeoutId: NodeJS.Timeout;
+    
+    script.onload = () => {
+      console.log('Google script loaded successfully');
+      clearTimeout(timeoutId);
+      // Wait a bit for Google to initialize
+      setTimeout(() => {
+        const available = isGoogleAvailable();
+        console.log('Google services available:', available);
+        resolve(available);
+      }, 500);
+    };
+    
+    script.onerror = (error) => {
+      console.error('Failed to load Google authentication script:', error);
+      clearTimeout(timeoutId);
+      resolve(false);
+    };
+
+    // Set a timeout for loading
+    timeoutId = setTimeout(() => {
+      console.warn('Google script loading timed out');
+      resolve(false);
+    }, 10000);
+
     document.body.appendChild(script);
   });
 };
 
-// Initialize Google client
-export const initializeGoogleClient = async (): Promise<void> => {
-  await loadGoogleScript();
-  
-  // We need to wait a bit to make sure google is fully loaded
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (window.google && window.google.accounts) {
-        resolve();
-      } else {
-        console.error('Google accounts API not available');
-        resolve(); // Resolve anyway to prevent blocking
-      }
-    }, 300);
-  });
+// Initialize Google client with comprehensive error handling
+export const initializeGoogleClient = async (): Promise<boolean> => {
+  try {
+    console.log('Initializing Google client...');
+    const scriptLoaded = await loadGoogleScript();
+    
+    if (!scriptLoaded) {
+      console.warn('Google script failed to load - Google sign-in will be unavailable');
+      return false;
+    }
+
+    // Double-check availability after loading
+    if (!isGoogleAvailable()) {
+      console.warn('Google services not available after script load');
+      return false;
+    }
+
+    console.log('Google client initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('Error initializing Google client:', error);
+    return false;
+  }
 };
 
 // Parse JWT token from Google
