@@ -16,12 +16,15 @@ export const usePayPalError = () => {
 
   const handlePayPalError = (error: PayPalError | any) => {
     console.error('PayPal error details:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error stringified:', JSON.stringify(error, null, 2));
     
     let message: string;
     
     // Handle different types of PayPal errors
     if (error?.details && Array.isArray(error.details) && error.details.length > 0) {
       // Handle PayPal API errors with details
+      console.log('Processing PayPal API error with details:', error.details);
       message = error.details.map((detail: any) => {
         if (detail.description) return detail.description;
         if (detail.issue) return detail.issue;
@@ -30,15 +33,19 @@ export const usePayPalError = () => {
       }).join(', ');
     } else if (error?.message) {
       // Handle generic error messages
+      console.log('Processing error with message:', error.message);
       if (error.message.includes('script')) {
         message = 'PayPal services are temporarily unavailable. Please refresh and try again.';
       } else if (error.message.includes('network') || error.message.includes('timeout')) {
         message = 'Network error. Please check your connection and try again.';
+      } else if (error.message.includes('window closed')) {
+        message = 'Payment window was closed before completion. Please try again.';
       } else {
         message = error.message;
       }
     } else if (error?.name) {
       // Handle error by name
+      console.log('Processing error by name:', error.name);
       switch (error.name) {
         case 'VALIDATION_ERROR':
           message = 'Invalid payment information. Please check your details and try again.';
@@ -49,6 +56,9 @@ export const usePayPalError = () => {
         case 'RESOURCE_NOT_FOUND':
           message = 'Payment plan not found. Please contact support.';
           break;
+        case 'POPUP_CLOSED':
+          message = 'Payment popup was closed. Please try again and complete the payment process.';
+          break;
         default:
           message = `Payment error: ${error.name}`;
       }
@@ -56,9 +66,11 @@ export const usePayPalError = () => {
       message = error;
     } else if (error?.err) {
       // Handle nested error objects
+      console.log('Processing nested error object:', error.err);
       return handlePayPalError(error.err);
     } else {
       message = 'Payment processing failed. Please try again or contact support.';
+      console.log('Using fallback error message for unknown error type');
     }
     
     setIsError(true);
@@ -74,6 +86,7 @@ export const usePayPalError = () => {
   };
 
   const resetError = () => {
+    console.log('Resetting PayPal error state');
     setIsError(false);
     setErrorMessage(null);
   };

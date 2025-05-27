@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -53,12 +54,21 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const { updateUserProfile } = useAuth();
   const { handlePayPalError, resetError } = usePayPalError();
 
-  console.log('PaymentMethodDialog rendered:', { open, selectedTier, subscriptionStep });
+  console.log('PaymentMethodDialog rendered:', { 
+    open, 
+    selectedTier, 
+    subscriptionStep, 
+    scriptState: {
+      isPending: scriptState.isPending,
+      isResolved: scriptState.isResolved,
+      isRejected: scriptState.isRejected
+    }
+  });
 
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
-      console.log('Payment dialog opened');
+      console.log('Payment dialog opened - resetting state');
       setSubscriptionStep('select');
       setIsProcessing(false);
       setSubscriptionId(null);
@@ -69,11 +79,15 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const createSubscription = async (data: any, actions: any) => {
     if (!selectedTier) {
       const error = 'Please select a subscription tier';
+      console.error('Subscription creation failed:', error);
       toast.error(error);
       return Promise.reject(new Error(error));
     }
 
     console.log('Creating subscription for tier:', selectedTier);
+    console.log('PayPal actions available:', Object.keys(actions));
+    console.log('PayPal data received:', data);
+    
     setIsProcessing(true);
     setSubscriptionStep('processing');
 
@@ -82,9 +96,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       console.log('Using plan ID:', planId);
 
       if (!planId) {
-        throw new Error('Invalid subscription plan selected');
+        throw new Error(`Invalid subscription plan selected: ${selectedTier}`);
       }
 
+      // Create subscription with detailed logging
+      console.log('Calling actions.subscription.create with plan_id:', planId);
+      
       const subscriptionData = await actions.subscription.create({
         plan_id: planId,
         application_context: {
@@ -98,9 +115,15 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       });
 
       console.log('Subscription created successfully:', subscriptionData);
+      toast.success('Subscription created! Please complete the payment.');
       return subscriptionData;
     } catch (error) {
       console.error('Error creating subscription:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
       handlePayPalError(error);
       setIsProcessing(false);
       setSubscriptionStep('error');
@@ -109,13 +132,16 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const onApprove = async (data: any, actions: any) => {
-    console.log('Subscription approved:', data);
+    console.log('Subscription approved with data:', data);
+    console.log('Actions available for approval:', Object.keys(actions));
     
     try {
       setSubscriptionStep('processing');
       
+      // Get subscription details
+      console.log('Getting subscription details...');
       const details = await actions.subscription.get();
-      console.log('Subscription details:', details);
+      console.log('Subscription details received:', details);
       
       const subscriptionData = {
         id: data.subscriptionID,
@@ -130,10 +156,13 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
       console.log('Storing subscription data:', subscriptionData);
 
+      // Store in localStorage for testing
       const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
       const updatedSubscriptions = [...existingSubscriptions, subscriptionData];
       localStorage.setItem('user_subscriptions', JSON.stringify(updatedSubscriptions));
 
+      // Update user profile
+      console.log('Updating user profile with tier:', selectedTier);
       await updateUserProfile({
         tier: selectedTier!,
         subscriptionId: data.subscriptionID
@@ -162,7 +191,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const onError = (error: any) => {
-    console.error('PayPal subscription error:', error);
+    console.error('PayPal subscription error occurred:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error keys:', Object.keys(error || {}));
+    
     handlePayPalError(error);
     setIsProcessing(false);
     setSubscriptionStep('error');
@@ -174,7 +206,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const onCancel = (data: any) => {
-    console.log('Subscription cancelled:', data);
+    console.log('Subscription cancelled by user:', data);
     toast.info('Payment Cancelled', {
       description: 'You cancelled the payment process. No charges were made.',
       duration: 4000,
@@ -184,6 +216,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const retryPayment = () => {
+    console.log('Retrying payment process');
     setSubscriptionStep('select');
     setIsProcessing(false);
     resetError();
