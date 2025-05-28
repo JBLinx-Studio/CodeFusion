@@ -15,9 +15,9 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// Updated with CORRECT Plan IDs - only Starter is configured in PayPal
+// Updated with CORRECT Plan ID from your business dashboard
 const PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // CORRECT PayPal Plan ID from your dashboard
+  starter: 'P-9GJ74476BD483620ENA2XHZA', // CORRECT PayPal Plan ID from your business dashboard
   developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024', // Placeholder - needs to be created
   pro: 'P-CODEFUSION-PRO-MONTHLY-2024', // Placeholder - needs to be created
   'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024', // Placeholder - needs to be created
@@ -106,6 +106,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
       // Create subscription with detailed logging
       console.log('Calling actions.subscription.create with plan_id:', planId);
+      console.log('Business Client ID being used: Abrc68jTAU0GltdLz1FYYLMLaD5Y952gRrHtwrzeWI4-C8nlafFLdcH95KXpo3Fc6zYZsdIkiV7Jnl34');
       
       const subscriptionData = await actions.subscription.create({
         plan_id: planId,
@@ -237,6 +238,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const isScriptRejected = scriptState.isRejected;
 
   console.log('Script state:', { isScriptLoading, isScriptResolved, isScriptRejected });
+  console.log('Current PayPal script state:', scriptState);
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -356,7 +358,10 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     </div>
                   ) : isScriptRejected ? (
                     <div className="w-full py-4 text-center bg-red-900/20 border border-red-500/20 text-red-400 rounded-md">
-                      <p className="mb-2">Failed to load PayPal</p>
+                      <p className="mb-2">Failed to load PayPal SDK</p>
+                      <p className="text-xs mb-2">
+                        Client ID: Abrc68j...Jnl34
+                      </p>
                       <Button 
                         onClick={() => window.location.reload()}
                         size="sm"
@@ -390,9 +395,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   )}
                   
                   <div className="text-xs text-[#9ca3af] text-center">
-                    <p>✓ Secure PayPal sandbox environment</p>
-                    <p>✓ Test payments only - no real charges</p>
-                    <p>✓ Using correct Plan ID: {PLAN_IDS[selectedTier]}</p>
+                    <p>✓ Business PayPal environment</p>
+                    <p>✓ Plan ID: {PLAN_IDS[selectedTier]}</p>
+                    <p>✓ Client ID: Abrc68j...Jnl34</p>
                     <p className="mt-1">By subscribing, you agree to our Terms of Service</p>
                   </div>
                 </div>
