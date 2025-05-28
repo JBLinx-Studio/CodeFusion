@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
 
-// Use SANDBOX Client ID for testing first
+// Use the SANDBOX Client ID you provided for testing
 const PAYPAL_CLIENT_ID = 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH';
 
 interface PayPalProviderProps {
@@ -15,7 +15,7 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Sandbox configuration for testing
+  // Proper sandbox configuration
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
@@ -25,7 +25,7 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     'enable-funding': 'paypal',
     'disable-funding': 'paylater,card',
     debug: true,
-    // Use sandbox environment for testing
+    // Make sure we're in sandbox mode
     'data-sdk-integration-source': 'button-factory'
   };
 

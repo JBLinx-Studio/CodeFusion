@@ -15,9 +15,10 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// Use the CORRECT Plan ID from your business dashboard
+// Use the CORRECT Plan ID from your business dashboard - but for testing, we need sandbox plan IDs
+// NOTE: You'll need to create this plan in your SANDBOX account, not business account
 const PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // Your actual business plan ID
+  starter: 'P-9GJ74476BD483620ENA2XHZA', // This should be created in SANDBOX for testing
   developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024',
   pro: 'P-CODEFUSION-PRO-MONTHLY-2024',
   'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024',
@@ -49,6 +50,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'creditCard'>('paypal');
   const [subscriptionStep, setSubscriptionStep] = useState<'select' | 'processing' | 'complete' | 'error'>('select');
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string>('');
   const { updateUserProfile } = useAuth();
 
   console.log('PaymentMethodDialog - selectedTier:', selectedTier);
@@ -59,6 +61,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       console.log('Payment dialog opened - resetting state');
       setSubscriptionStep('select');
       setSubscriptionId(null);
+      setErrorDetails('');
     }
   }, [open]);
 
@@ -98,22 +101,37 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
     } catch (error) {
       console.error('Error processing successful payment:', error);
+      setErrorDetails('Failed to update user profile after successful payment');
       setSubscriptionStep('error');
     }
   };
 
   const handlePaymentError = (error: any) => {
-    console.error('Payment error:', error);
+    console.error('Payment error details:', error);
+    
+    let errorMessage = 'Unknown payment error';
+    
+    if (error?.details && Array.isArray(error.details)) {
+      errorMessage = error.details.map((d: any) => d.description || d.issue || 'Payment error').join(', ');
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    
+    setErrorDetails(errorMessage);
     setSubscriptionStep('error');
+    
     toast.error('Payment Failed', {
-      description: 'There was an issue processing your payment. Please try again.',
-      duration: 6000,
+      description: errorMessage,
+      duration: 8000,
     });
   };
 
   const retryPayment = () => {
     console.log('Retrying payment process');
     setSubscriptionStep('select');
+    setErrorDetails('');
   };
 
   if (!selectedTier) {
@@ -158,9 +176,17 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               <AlertCircle className="w-8 h-8 text-white" />
             </div>
             <p className="text-red-400 font-medium">Payment Failed</p>
-            <p className="text-[#9ca3af] text-sm mt-2">
-              Please try again or contact support.
+            <p className="text-[#9ca3af] text-sm mt-2 mb-4">
+              {errorDetails || 'Please try again or contact support.'}
             </p>
+            <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4 mb-4">
+              <p className="text-red-400 text-xs">
+                <strong>Possible Issues:</strong><br/>
+                • Plan ID might not exist in sandbox<br/>
+                • Using business plan ID in sandbox environment<br/>
+                • Subscription setup mismatch
+              </p>
+            </div>
             <Button 
               onClick={retryPayment}
               className="mt-4 bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
@@ -221,9 +247,11 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   />
                   
                   <div className="text-xs text-[#9ca3af] text-center">
-                    <p>✓ Sandbox testing environment</p>
+                    <p>⚠️ IMPORTANT: Using business plan ID in sandbox</p>
                     <p>✓ Plan ID: {PLAN_IDS[selectedTier]}</p>
-                    <p className="mt-1">Test mode - No real charges will be made</p>
+                    <p className="text-yellow-400 mt-1">
+                      If payment fails, you need to create this plan in your SANDBOX account
+                    </p>
                   </div>
                 </div>
               )}

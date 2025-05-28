@@ -37,7 +37,9 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
           shipping_preference: 'NO_SHIPPING',
           user_action: 'SUBSCRIBE_NOW',
           brand_name: 'CodeFusion',
-          locale: 'en-US'
+          locale: 'en-US',
+          return_url: window.location.origin,
+          cancel_url: window.location.origin
         }
       });
 
@@ -47,7 +49,14 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
     } catch (error) {
       console.error('Error creating subscription:', error);
       setIsProcessing(false);
-      onError(error);
+      
+      // Better error handling
+      if (error?.details && Array.isArray(error.details)) {
+        const errorMsg = error.details.map((d: any) => d.description || d.issue).join(', ');
+        onError(`Subscription creation failed: ${errorMsg}`);
+      } else {
+        onError(`Plan ID ${planId} might not exist in sandbox environment`);
+      }
       return Promise.reject(error);
     }
   };
