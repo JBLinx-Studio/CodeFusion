@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -15,14 +14,14 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// Use the CORRECT Plan ID from your business dashboard - but for testing, we need sandbox plan IDs
-// NOTE: You'll need to create this plan in your SANDBOX account, not business account
+// For sandbox testing, we need to either create plans via API or use test plan IDs
+// Since sandbox doesn't have business dashboard plans, we'll use a test approach
 const PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // This should be created in SANDBOX for testing
-  developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024',
-  pro: 'P-CODEFUSION-PRO-MONTHLY-2024',
-  'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024',
-  'team-pro': 'P-CODEFUSION-TEAM-PRO-MONTHLY-2024',
+  starter: 'P-9GJ74476BD483620ENA2XHZA', // This needs to be created in sandbox or we handle it differently
+  developer: 'SANDBOX-DEV-PLAN-TEST',
+  pro: 'SANDBOX-PRO-PLAN-TEST',
+  'team-starter': 'SANDBOX-TEAM-START-TEST',
+  'team-pro': 'SANDBOX-TEAM-PRO-TEST',
 };
 
 const PLAN_PRICES = {
@@ -71,13 +70,14 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     try {
       setSubscriptionStep('processing');
       
-      // Store subscription data
+      // Store subscription data for sandbox testing
       const subscriptionData = {
         id: subscriptionId,
         tier: selectedTier,
         status: 'active',
         createdAt: new Date().toISOString(),
-        planId: PLAN_IDS[selectedTier!]
+        planId: PLAN_IDS[selectedTier!],
+        environment: 'sandbox'
       };
 
       // Store in localStorage for testing
@@ -111,12 +111,17 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     
     let errorMessage = 'Unknown payment error';
     
-    if (error?.details && Array.isArray(error.details)) {
+    if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error?.details && Array.isArray(error.details)) {
       errorMessage = error.details.map((d: any) => d.description || d.issue || 'Payment error').join(', ');
     } else if (error?.message) {
       errorMessage = error.message;
-    } else if (typeof error === 'string') {
-      errorMessage = error;
+    }
+    
+    // Add sandbox-specific guidance
+    if (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID')) {
+      errorMessage += '\n\nFor sandbox testing, you need to create subscription plans in your PayPal sandbox account first.';
     }
     
     setErrorDetails(errorMessage);
@@ -150,12 +155,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </DialogTitle>
           <DialogDescription className="text-[#9ca3af]">
             {subscriptionStep === 'complete' 
-              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated`
+              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated (Sandbox Mode)`
               : subscriptionStep === 'error'
               ? 'There was an issue processing your payment'
               : subscriptionStep === 'processing'
               ? 'Please wait while we process your payment'
-              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month`
+              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month (Sandbox Testing)`
             }
           </DialogDescription>
         </DialogHeader>
@@ -169,6 +174,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <p className="text-[#9ca3af] text-sm mt-2">
               Subscription ID: {subscriptionId?.substring(0, 15)}...
             </p>
+            <p className="text-yellow-400 text-xs mt-2">
+              (Sandbox Test Mode)
+            </p>
           </div>
         ) : subscriptionStep === 'error' ? (
           <div className="text-center py-6">
@@ -176,15 +184,16 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               <AlertCircle className="w-8 h-8 text-white" />
             </div>
             <p className="text-red-400 font-medium">Payment Failed</p>
-            <p className="text-[#9ca3af] text-sm mt-2 mb-4">
+            <p className="text-[#9ca3af] text-sm mt-2 mb-4 whitespace-pre-line">
               {errorDetails || 'Please try again or contact support.'}
             </p>
-            <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4 mb-4">
-              <p className="text-red-400 text-xs">
-                <strong>Possible Issues:</strong><br/>
-                • Plan ID might not exist in sandbox<br/>
-                • Using business plan ID in sandbox environment<br/>
-                • Subscription setup mismatch
+            <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4 mb-4">
+              <p className="text-blue-400 text-xs">
+                <strong>Sandbox Testing Note:</strong><br/>
+                • Account: sb-7ommm28924697@business.example.com<br/>
+                • Plans need to be created in sandbox dashboard<br/>
+                • Or use PayPal's REST API to create plans<br/>
+                • Only Starter plan is currently configured for testing
               </p>
             </div>
             <Button 
@@ -247,10 +256,11 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   />
                   
                   <div className="text-xs text-[#9ca3af] text-center">
-                    <p>⚠️ IMPORTANT: Using business plan ID in sandbox</p>
-                    <p>✓ Plan ID: {PLAN_IDS[selectedTier]}</p>
-                    <p className="text-yellow-400 mt-1">
-                      If payment fails, you need to create this plan in your SANDBOX account
+                    <p className="text-yellow-400">⚠️ SANDBOX TESTING MODE</p>
+                    <p>Account: sb-7ommm28924697@business.example.com</p>
+                    <p>Plan ID: {PLAN_IDS[selectedTier]}</p>
+                    <p className="text-blue-400 mt-2">
+                      Note: Plans may need to be created in your sandbox account first
                     </p>
                   </div>
                 </div>

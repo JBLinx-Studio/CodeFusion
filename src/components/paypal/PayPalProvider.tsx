@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
 
-// Use the SANDBOX Client ID you provided for testing
+// Use your actual sandbox Client ID
 const PAYPAL_CLIENT_ID = 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH';
 
 interface PayPalProviderProps {
@@ -15,18 +15,18 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Proper sandbox configuration
+  // Sandbox configuration - simplified for testing
   const paypalOptions = {
     clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
     intent: 'subscription',
     vault: true,
     components: 'buttons',
-    'enable-funding': 'paypal',
-    'disable-funding': 'paylater,card',
     debug: true,
-    // Make sure we're in sandbox mode
-    'data-sdk-integration-source': 'button-factory'
+    // Enable all funding sources for testing
+    'enable-funding': 'paypal,paylater,card',
+    // Explicitly set sandbox environment
+    'data-environment': 'sandbox'
   };
 
   const handleRetry = () => {
@@ -56,7 +56,7 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
         setScriptError(true);
         setIsRetrying(false);
         toast.error('PayPal services failed to load', {
-          description: 'This might be due to network issues or browser restrictions.',
+          description: 'Network issues or browser restrictions detected.',
           duration: 8000
         });
       }
@@ -78,18 +78,11 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
           </div>
           <h3 className="text-white text-xl font-semibold mb-4">PayPal Failed to Load</h3>
           <p className="text-[#9ca3af] mb-4 text-sm">
-            <strong>Environment:</strong> Sandbox Testing
+            <strong>Environment:</strong> Sandbox
             <br />
-            <strong>Client ID:</strong> {PAYPAL_CLIENT_ID.substring(0, 10)}...
+            <strong>Account:</strong> sb-7ommm28924697@business.example.com
             <br />
             <strong>Attempts:</strong> {retryCount}
-          </p>
-          <p className="text-[#9ca3af] mb-6">
-            PayPal sandbox services couldn't be loaded. This might be due to:
-            <br />• Network connectivity issues
-            <br />• Browser blocking PayPal scripts
-            <br />• Ad blockers or extensions
-            <br />• Firewall restrictions
           </p>
           <button 
             onClick={handleRetry}
