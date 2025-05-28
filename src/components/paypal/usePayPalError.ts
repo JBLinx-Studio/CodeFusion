@@ -38,8 +38,10 @@ export const usePayPalError = () => {
         message = 'PayPal services are temporarily unavailable. Please refresh and try again.';
       } else if (error.message.includes('network') || error.message.includes('timeout')) {
         message = 'Network error. Please check your connection and try again.';
-      } else if (error.message.includes('window closed')) {
-        message = 'Payment window was closed before completion. Please try again.';
+      } else if (error.message.includes('window closed') || error.message.includes('popup closed')) {
+        message = 'Payment window was closed. Please try again and complete the payment process.';
+      } else if (error.message.includes('not yet configured')) {
+        message = error.message; // Pass through configuration errors
       } else {
         message = error.message;
       }
@@ -58,6 +60,9 @@ export const usePayPalError = () => {
           break;
         case 'POPUP_CLOSED':
           message = 'Payment popup was closed. Please try again and complete the payment process.';
+          break;
+        case 'SCRIPT_LOAD_ERROR':
+          message = 'PayPal failed to load. Please check your internet connection and try again.';
           break;
         default:
           message = `Payment error: ${error.name}`;

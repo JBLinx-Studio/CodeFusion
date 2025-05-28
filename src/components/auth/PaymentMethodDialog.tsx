@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -16,12 +15,13 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
+// Updated with CORRECT Plan IDs - only Starter is configured in PayPal
 const PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // Real PayPal Plan ID
-  developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024', 
-  pro: 'P-CODEFUSION-PRO-MONTHLY-2024',
-  'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024',
-  'team-pro': 'P-CODEFUSION-TEAM-PRO-MONTHLY-2024',
+  starter: 'P-9GJ74476BD483620ENA2XHZA', // CORRECT PayPal Plan ID from your dashboard
+  developer: 'P-CODEFUSION-DEVELOPER-MONTHLY-2024', // Placeholder - needs to be created
+  pro: 'P-CODEFUSION-PRO-MONTHLY-2024', // Placeholder - needs to be created
+  'team-starter': 'P-CODEFUSION-TEAM-STARTER-MONTHLY-2024', // Placeholder - needs to be created
+  'team-pro': 'P-CODEFUSION-TEAM-PRO-MONTHLY-2024', // Placeholder - needs to be created
 };
 
 const PLAN_PRICES = {
@@ -97,6 +97,11 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
       if (!planId) {
         throw new Error(`Invalid subscription plan selected: ${selectedTier}`);
+      }
+
+      // Check if this is a configured plan (only Starter for now)
+      if (selectedTier !== 'starter') {
+        throw new Error(`${PLAN_NAMES[selectedTier]} plan is not yet configured in PayPal. Please contact support.`);
       }
 
       // Create subscription with detailed logging
@@ -387,6 +392,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   <div className="text-xs text-[#9ca3af] text-center">
                     <p>✓ Secure PayPal sandbox environment</p>
                     <p>✓ Test payments only - no real charges</p>
+                    <p>✓ Using correct Plan ID: {PLAN_IDS[selectedTier]}</p>
                     <p className="mt-1">By subscribing, you agree to our Terms of Service</p>
                   </div>
                 </div>
