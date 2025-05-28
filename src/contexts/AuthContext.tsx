@@ -44,14 +44,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     isAuthenticated: false,
     isLoading: true,
   });
+  const [googleAvailable, setGoogleAvailable] = useState(false);
 
   // Initialize Google client when component mounts
   useEffect(() => {
     const initGoogle = async () => {
       try {
-        await initializeGoogleClient();
+        console.log('Attempting to initialize Google authentication...');
+        const available = await initializeGoogleClient();
+        setGoogleAvailable(available);
+        
+        if (!available) {
+          console.log('Google authentication unavailable - this may be due to network restrictions');
+        }
       } catch (error) {
         console.error('Failed to initialize Google client', error);
+        setGoogleAvailable(false);
       }
     };
 
@@ -215,48 +223,72 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   // Logout user
   const logout = () => {
-    // If the user has an active subscription, handle cleanup
-    // In a real app, you might want to confirm with the user before logging out
-    // if they have an active subscription
     setCurrentUser(null);
     toast.info('You have been logged out');
   };
 
-  // Google login (real implementation)
+  // Google login with improved error handling
   const googleLogin = async (): Promise<boolean> => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
       
-      // Make sure Google client is initialized
-      await initializeGoogleClient();
+      // Check if Google is available
+      if (!googleAvailable) {
+        toast.error('Google sign-in is currently unavailable', {
+          description: 'This may be due to network restrictions or browser extensions'
+        });
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
       
+      // Re-check Google client availability
       if (!window.google || !window.google.accounts) {
-        toast.error('Google authentication is not available');
+        toast.error('Google authentication service is not available');
         setAuthState(prev => ({ ...prev, isLoading: false }));
         return false;
       }
       
       // Create a promise to handle the Google sign-in callback
       const googleSignInResult = await new Promise<{ credential: string } | null>((resolve) => {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: (response) => {
-            if (response && response.credential) {
-              resolve({ credential: response.credential });
-            } else {
+        const timeoutId = setTimeout(() => {
+          console.log('Google sign-in timed out');
+          resolve(null);
+        }, 30000); // 30 second timeout
+
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: (response) => {
+              clearTimeout(timeoutId);
+              if (response && response.credential) {
+                console.log('Google sign-in successful');
+                resolve({ credential: response.credential });
+              } else {
+                console.log('Google sign-in failed - no credential received');
+                resolve(null);
+              }
+            },
+            auto_select: true,
+          });
+          
+          // Prompt the user to select an account
+          window.google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed()) {
+              console.log('Google sign-in prompt not displayed');
+              clearTimeout(timeoutId);
               resolve(null);
             }
-          },
-          auto_select: true,
-        });
-        
-        // Prompt the user to select an account
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // If prompt not displayed or skipped, resolve with null
-            resolve(null);
-          }
-        });
+            if (notification.isSkippedMoment()) {
+              console.log('Google sign-in prompt skipped');
+              clearTimeout(timeoutId);
+              resolve(null);
+            }
+          });
+        } catch (error) {
+          console.error('Error initializing Google sign-in:', error);
+          clearTimeout(timeoutId);
+          resolve(null);
+        }
       });
       
       // If no result, return false
@@ -285,7 +317,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const updatedUser = {
           ...existingUser,
           lastLogin: new Date().toISOString(),
-          avatar: picture || existingUser.avatar, // Update avatar if new one available
+          avatar: picture || existingUser.avatar,
           authProvider: 'google' as const
         };
         const updatedUsers = users.map(u =>
@@ -310,7 +342,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           authProvider: 'google'
         };
         
-        // Save new user
         saveUsers([...users, newUser]);
         setCurrentUser(newUser);
         
@@ -322,7 +353,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       return true;
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error('Google login failed');
+      toast.error('Google login failed', {
+        description: 'Please try again or use email login'
+      });
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
@@ -366,7 +399,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   };
 
   const value = {
-    authState,
+    authState: {
+      ...authState,
+      googleAvailable // Add Google availability to auth state
+    },
     login,
     register,
     logout,
