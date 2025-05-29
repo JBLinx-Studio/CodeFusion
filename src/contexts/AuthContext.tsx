@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { initializeGoogleClient, GOOGLE_CLIENT_ID, parseGoogleJwt } from '@/utils/googleAuth';
@@ -39,7 +38,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 const USERS_STORAGE_KEY = 'codeplayground-users';
 const CURRENT_USER_KEY = 'codeplayground-current-user';
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
@@ -385,3 +384,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export { AuthProvider };
