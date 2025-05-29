@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 import { mockBackend, createMockFetchForIframe } from "@/utils/MockBackendService";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface PreviewPanelProps {
   html: string;
@@ -27,6 +28,9 @@ export const PreviewPanel = ({
   const [isLoading, setIsLoading] = useState(false);
   const [consoleOutput, setConsoleOutput] = useState<{type: 'log' | 'error' | 'warn'; content: string}[]>([]);
   const [showConsole, setShowConsole] = useState(false);
+  const { settings } = useSettings();
+  const [lastUpdatedCode, setLastUpdatedCode] = useState({ html: '', css: '', js: '' });
+  const [needsManualUpdate, setNeedsManualUpdate] = useState(false);
   
   // Handle mock fetch requests from iframe
   useEffect(() => {
@@ -113,6 +117,10 @@ export const PreviewPanel = ({
     if (!iframeDocument) return;
     
     setIsLoading(true);
+    setNeedsManualUpdate(false);
+    
+    // Update lastUpdatedCode
+    setLastUpdatedCode({ html, css, js });
     
     // Capture console logs
     const consoleLogScript = `
@@ -182,17 +190,30 @@ export const PreviewPanel = ({
     iframeDocument.write(combinedOutput);
     iframeDocument.close();
     
-    // Handle the loading state
+    // Handle the loading state - reduced time to minimize flicker
     setTimeout(() => {
       setIsLoading(false);
-    }, 500);
+    }, 200);
   };
   
-  // Update preview when code changes
+  // Check if code has changed and needs update
   useEffect(() => {
-    updatePreview();
-    setConsoleOutput([]); // Clear console on code change
-  }, [html, css, js]);
+    const codeChanged = 
+      lastUpdatedCode.html !== html ||
+      lastUpdatedCode.css !== css ||
+      lastUpdatedCode.js !== js;
+    
+    if (codeChanged) {
+      if (settings.autoUpdate) {
+        // Only update automatically if autoUpdate is enabled
+        updatePreview();
+        setConsoleOutput([]); // Clear console on code change
+      } else {
+        // Mark that manual update is needed without automatically updating
+        setNeedsManualUpdate(true);
+      }
+    }
+  }, [html, css, js, settings.autoUpdate]);
   
   const handleOpenExternalPreview = () => {
     const blob = new Blob([
@@ -258,6 +279,11 @@ export const PreviewPanel = ({
         <span className="text-sm font-medium flex items-center">
           <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse"></span>
           Preview
+          {needsManualUpdate && (
+            <span className="ml-2 text-xs bg-amber-600/30 text-amber-400 px-2 py-0.5 rounded-full">
+              Update needed
+            </span>
+          )}
         </span>
         <div className="flex gap-1 items-center">
           <div className="flex bg-[#242a38] rounded-md overflow-hidden mr-2">
@@ -331,20 +357,20 @@ export const PreviewPanel = ({
           </Button>
           
           <Button 
-            variant="ghost" 
+            variant={needsManualUpdate ? "default" : "ghost"}
             size="sm"
             onClick={updatePreview}
-            className="h-7 w-7 p-0 text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#242a38]"
+            className={`h-7 w-7 p-0 ${needsManualUpdate ? 'bg-amber-600 text-white hover:bg-amber-700' : 'text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#242a38]'}`}
             title="Refresh Preview"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
           </Button>
         </div>
       </div>
       <div className="flex-1 bg-white overflow-auto flex flex-col">
         <div className={`flex-1 ${viewportSize !== 'desktop' ? 'flex justify-center bg-[#f0f0f0]' : ''}`}>
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0f1117]/70 z-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366f1]"></div>
             </div>
           )}

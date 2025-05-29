@@ -142,7 +142,7 @@ export const EditorContainer: React.FC = () => {
     toast.success("Changes saved successfully");
   };
   
-  // Get all files that should be displayed in the editor
+  // Fix the type error by ensuring this returns a boolean value
   const getDisplayFiles = () => {
     if (view !== 'split') {
       return [currentFile];
