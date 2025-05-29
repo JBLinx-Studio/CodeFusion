@@ -55,6 +55,9 @@ export const PayPalTestModeToggle: React.FC = () => {
         <p className="text-[#9ca3af]">
           <strong>Client ID:</strong> {config.clientId.substring(0, 20)}...
         </p>
+        <p className="text-[#9ca3af]">
+          <strong>Plan ID:</strong> {config.planId === 'SANDBOX_PLAN_TO_BE_CREATED' ? 'Will be created automatically' : config.planId}
+        </p>
         
         {config.isTestMode && (
           <div className="pt-2 border-t border-[#2d3748]">
@@ -67,6 +70,20 @@ export const PayPalTestModeToggle: React.FC = () => {
               <RefreshCw className="w-4 h-4 mr-2" />
               Clear Sandbox Plans
             </Button>
+            <p className="text-xs text-yellow-400 mt-2 text-center">
+              Use sandbox account: sb-7ommm28924697@business.example.com
+            </p>
+          </div>
+        )}
+        
+        {!config.isTestMode && (
+          <div className="pt-2 border-t border-[#2d3748]">
+            <p className="text-xs text-green-400 text-center">
+              ✅ Live payments enabled
+            </p>
+            <p className="text-xs text-green-400 text-center">
+              Real PayPal accounts will be charged
+            </p>
           </div>
         )}
       </div>
