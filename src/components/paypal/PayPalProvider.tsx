@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { toast } from 'sonner';
-import { PayPalConfigService } from '@/services/PayPalConfigService';
+
+// Use your actual sandbox Client ID
+const PAYPAL_CLIENT_ID = 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH';
 
 interface PayPalProviderProps {
   children: React.ReactNode;
@@ -12,44 +14,19 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
   const [scriptError, setScriptError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isInitializing, setIsInitializing] = useState(true);
 
-  const configService = PayPalConfigService.getInstance();
-  const config = configService.getConfig();
-
-  // Initialize PayPal configuration
-  useEffect(() => {
-    const initializePayPal = async () => {
-      try {
-        setIsInitializing(true);
-        
-        if (config.isTestMode) {
-          console.log('Initializing PayPal in sandbox mode...');
-          await configService.ensureSandboxPlan();
-        } else {
-          console.log('Initializing PayPal in live mode...');
-        }
-        
-        setIsInitializing(false);
-      } catch (error) {
-        console.error('PayPal initialization error:', error);
-        setScriptError(true);
-        setIsInitializing(false);
-      }
-    };
-
-    initializePayPal();
-  }, []);
-
+  // Sandbox configuration - simplified for testing
   const paypalOptions = {
-    clientId: config.clientId,
+    clientId: PAYPAL_CLIENT_ID,
     currency: 'USD',
     intent: 'subscription',
     vault: true,
     components: 'buttons',
-    debug: config.isTestMode,
+    debug: true,
+    // Enable all funding sources for testing
     'enable-funding': 'paypal,paylater,card',
-    'data-environment': config.environment
+    // Explicitly set sandbox environment
+    'data-environment': 'sandbox'
   };
 
   const handleRetry = () => {
@@ -61,15 +38,9 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     const existingScripts = document.querySelectorAll('script[src*="paypal.com"]');
     existingScripts.forEach(script => script.remove());
     
-    // Clear sandbox data and retry
-    if (config.isTestMode) {
-      configService.clearSandboxData();
-    }
-    
     setTimeout(() => {
       setScriptError(false);
       setIsRetrying(false);
-      window.location.reload();
     }, 1000);
   };
 
@@ -80,13 +51,12 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
         console.error('PayPal script loading error:', {
           message: event.message,
           filename: event.filename,
-          error: event.error,
-          environment: config.environment
+          error: event.error
         });
         setScriptError(true);
         setIsRetrying(false);
         toast.error('PayPal services failed to load', {
-          description: `Environment: ${config.environment}. Check network connection.`,
+          description: 'Network issues or browser restrictions detected.',
           duration: 8000
         });
       }
@@ -97,25 +67,7 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
     return () => {
       window.removeEventListener('error', handleScriptError);
     };
-  }, [config.environment]);
-
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen bg-[#0c1018] flex items-center justify-center">
-        <div className="text-center p-8 bg-[#1a1f2c] border border-[#2d3748] rounded-lg max-w-md">
-          <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="text-white text-2xl">⚡</span>
-          </div>
-          <h3 className="text-white text-xl font-semibold mb-4">Initializing PayPal</h3>
-          <p className="text-[#9ca3af] mb-4 text-sm">
-            <strong>Environment:</strong> {config.environment}
-            <br />
-            <strong>Mode:</strong> {config.isTestMode ? 'Test Mode' : 'Live Mode'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  }, []);
 
   if (scriptError) {
     return (
@@ -126,9 +78,9 @@ export const PayPalProvider: React.FC<PayPalProviderProps> = ({ children }) => {
           </div>
           <h3 className="text-white text-xl font-semibold mb-4">PayPal Failed to Load</h3>
           <p className="text-[#9ca3af] mb-4 text-sm">
-            <strong>Environment:</strong> {config.environment}
+            <strong>Environment:</strong> Sandbox
             <br />
-            <strong>Client ID:</strong> {config.clientId.substring(0, 20)}...
+            <strong>Account:</strong> sb-7ommm28924697@business.example.com
             <br />
             <strong>Attempts:</strong> {retryCount}
           </p>
