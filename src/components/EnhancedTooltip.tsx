@@ -16,39 +16,10 @@ export const EnhancedTooltip: React.FC<EnhancedTooltipProps> = ({
   className = '',
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
-  const tooltipRef = React.useRef<HTMLDivElement>(null);
-  const wrapperRef = React.useRef<HTMLDivElement>(null);
-  const [tooltipPosition, setTooltipPosition] = React.useState({ 
-    position,
-    adjustedX: 0
-  });
-  
-  React.useEffect(() => {
-    if (isHovered && tooltipRef.current && wrapperRef.current) {
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      const wrapperRect = wrapperRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      
-      // Check if tooltip is going off the right edge
-      if (tooltipRect.right > viewportWidth) {
-        const overflowAmount = tooltipRect.right - viewportWidth;
-        setTooltipPosition(prev => ({ ...prev, adjustedX: -overflowAmount - 10 }));
-      } else {
-        setTooltipPosition(prev => ({ ...prev, adjustedX: 0 }));
-      }
-      
-      // If close to the top edge, force bottom position
-      if (wrapperRect.top < 60 && position === 'top') {
-        setTooltipPosition(prev => ({ ...prev, position: 'bottom' }));
-      } else {
-        setTooltipPosition(prev => ({ ...prev, position }));
-      }
-    }
-  }, [isHovered, position]);
   
   // Calculate tooltip position
   const getTooltipPosition = () => {
-    switch (tooltipPosition.position) {
+    switch (position) {
       case 'top':
         return 'bottom-full mb-2';
       case 'right':
@@ -64,7 +35,6 @@ export const EnhancedTooltip: React.FC<EnhancedTooltipProps> = ({
   
   return (
     <div 
-      ref={wrapperRef}
       className="relative inline-block"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -73,31 +43,21 @@ export const EnhancedTooltip: React.FC<EnhancedTooltipProps> = ({
       
       {isHovered && (
         <motion.div
-          ref={tooltipRef}
-          className={`fixed z-50 px-2 py-1 text-xs rounded-md whitespace-nowrap bg-[#1a1f2c]/95 text-white border border-[#374151]/70 shadow-xl backdrop-blur-sm ${className}`}
+          className={`absolute z-50 px-2 py-1 text-xs rounded-md whitespace-nowrap ${getTooltipPosition()} bg-[#1a1f2c]/95 text-white border border-[#374151]/70 shadow-xl backdrop-blur-sm ${className}`}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2 }}
-          style={{ 
-            top: tooltipPosition.position === 'bottom' ? '100%' : 
-                 tooltipPosition.position === 'top' ? 'auto' : '50%',
-            bottom: tooltipPosition.position === 'top' ? '100%' : 'auto',
-            left: tooltipPosition.position === 'right' ? '100%' : 
-                  tooltipPosition.position === 'left' ? 'auto' : '50%',
-            right: tooltipPosition.position === 'left' ? '100%' : 'auto',
-            transform: tooltipPosition.position === 'top' || tooltipPosition.position === 'bottom' 
-                      ? `translateX(-50%) translateX(${tooltipPosition.adjustedX}px)` 
-                      : tooltipPosition.position === 'left' || tooltipPosition.position === 'right'
-                      ? 'translateY(-50%)' 
-                      : 'none',
-            margin: tooltipPosition.position === 'top' ? '0 0 8px 0' : 
-                   tooltipPosition.position === 'right' ? '0 0 0 8px' :
-                   tooltipPosition.position === 'bottom' ? '8px 0 0 0' :
-                   tooltipPosition.position === 'left' ? '0 8px 0 0' : '0'
-          }}
         >
           {tooltip}
+          <div 
+            className={`absolute w-2 h-2 bg-[#1a1f2c]/95 border-[#374151]/70 transform rotate-45 
+              ${position === 'top' ? 'bottom-[-4px] border-b border-r left-1/2 ml-[-4px]' : ''}
+              ${position === 'right' ? 'left-[-4px] border-l border-t top-1/2 mt-[-4px]' : ''}
+              ${position === 'bottom' ? 'top-[-4px] border-t border-l left-1/2 ml-[-4px]' : ''}
+              ${position === 'left' ? 'right-[-4px] border-r border-b top-1/2 mt-[-4px]' : ''}
+            `}
+          />
         </motion.div>
       )}
     </div>

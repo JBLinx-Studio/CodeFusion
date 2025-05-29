@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useLayout } from '@/contexts/LayoutContext';
@@ -24,8 +25,6 @@ import { GitHubIntegration } from "@/components/GitHubIntegration";
 import { AdvancedSettings } from "@/components/AdvancedSettings";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
-import { EnhancedTooltip } from './EnhancedTooltip';
-import { UserMenu } from './auth/UserMenu';
 
 export const AppHeader: React.FC = () => {
   const { 
@@ -60,7 +59,7 @@ export const AppHeader: React.FC = () => {
   return (
     <>
       <motion.header 
-        className="bg-gradient-to-r from-[#0f1117] to-[#1a1f2c] border-b border-[#2d3748] px-4 py-2 flex justify-between items-center shadow-md"
+        className="bg-gradient-to-r from-[#0f1117] to-[#1a1f2c] border-b border-[#2d3748] px-4 py-3 flex justify-between items-center shadow-md"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -77,7 +76,7 @@ export const AppHeader: React.FC = () => {
             className="text-xl font-semibold bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent hover:from-[#818cf8] hover:to-[#d946ef] transition-all duration-300"
             whileHover={{ scale: 1.03 }}
           >
-            CodeFusion
+            CodePlayground
           </motion.h1>
         </div>
         
@@ -115,59 +114,50 @@ export const AppHeader: React.FC = () => {
           </motion.div>
         </div>
         
-        <div className="flex gap-1 md:gap-1 items-center">
-          <EnhancedTooltip tooltip="Copy code" position="bottom">
-            <Button 
-              variant="ghost" 
-              onClick={handleCopyCode}
-              size="sm"
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden h-8"
-            >
-              <Copy size={16} />
-              <span className="hidden lg:inline text-xs">Copy</span>
-            </Button>
-          </EnhancedTooltip>
+        <div className="flex gap-1 md:gap-2 items-center">
+          <Button 
+            variant="ghost" 
+            onClick={handleCopyCode}
+            className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden"
+            title="Copy code"
+          >
+            <Copy size={16} />
+            <span className="hidden lg:inline">Copy</span>
+          </Button>
           
-          <EnhancedTooltip tooltip="Download code" position="bottom">
-            <Button 
-              variant="ghost" 
-              onClick={handleDownloadCode}
-              size="sm"
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden h-8"
-            >
-              <Download size={16} />
-              <span className="hidden lg:inline text-xs">Download</span>
-            </Button>
-          </EnhancedTooltip>
+          <Button 
+            variant="ghost" 
+            onClick={handleDownloadCode}
+            className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:flex items-center gap-1 hidden"
+            title="Download code"
+          >
+            <Download size={16} />
+            <span className="hidden lg:inline">Download</span>
+          </Button>
           
-          <EnhancedTooltip tooltip="AI Assistant" position="bottom">
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowAiAssistant(!showAiAssistant)}
-              size="sm"
-              className={`text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] items-center gap-1 h-8 ${showAiAssistant ? 'bg-[#1e293b]/80 text-[#6366f1]' : ''}`}
-            >
-              <Sparkles size={16} className={`${showAiAssistant ? 'animate-pulse' : ''}`} />
-              <span className="hidden lg:inline text-xs">AI</span>
-            </Button>
-          </EnhancedTooltip>
+          <Button 
+            variant="ghost" 
+            onClick={() => setShowAiAssistant(!showAiAssistant)}
+            className={`text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] items-center gap-1 ${showAiAssistant ? 'bg-[#1e293b]/80 text-[#6366f1]' : ''}`}
+            title="AI Assistant"
+          >
+            <Sparkles size={16} className={`${showAiAssistant ? 'animate-pulse' : ''}`} />
+            <span className="hidden lg:inline">AI</span>
+          </Button>
           
           <GitHubIntegration files={{}} />
           
           {!isMobile ? (
-            <EnhancedTooltip tooltip="Settings" position="bottom">
-              <AdvancedSettings 
-                settings={settings}
-                onUpdateSettings={updateSettings}
-              />
-            </EnhancedTooltip>
+            <AdvancedSettings 
+              settings={settings}
+              onUpdateSettings={updateSettings}
+            />
           ) : (
             <Sheet>
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  size="sm"
-                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] h-8"
+                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748]"
                 >
                   <Settings size={16} />
                 </Button>
@@ -181,50 +171,41 @@ export const AppHeader: React.FC = () => {
             </Sheet>
           )}
           
-          <EnhancedTooltip tooltip="Reset to defaults" position="bottom">
-            <Button 
-              variant="ghost" 
-              onClick={resetToDefaults}
-              size="sm"
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 h-8"
-            >
-              <RefreshCw size={16} />
-              <span className="hidden md:inline text-xs">Reset</span>
-            </Button>
-          </EnhancedTooltip>
+          <Button 
+            variant="ghost" 
+            onClick={resetToDefaults}
+            className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 transition-all duration-200 hover:rotate-180"
+            title="Reset to defaults"
+          >
+            <RefreshCw size={16} />
+            <span className="hidden md:inline">Reset</span>
+          </Button>
           
-          <EnhancedTooltip tooltip="Clear all" position="bottom">
-            <Button 
-              variant="ghost" 
-              onClick={clearAll}
-              size="sm"
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 h-8"
-            >
-              <Trash2 size={16} />
-              <span className="hidden md:inline text-xs">Clear</span>
-            </Button>
-          </EnhancedTooltip>
+          <Button 
+            variant="ghost" 
+            onClick={clearAll}
+            className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] flex items-center gap-1 transition-colors"
+            title="Clear all"
+          >
+            <Trash2 size={16} />
+            <span className="hidden md:inline">Clear</span>
+          </Button>
           
-          <EnhancedTooltip tooltip={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"} position="bottom">
-            <Button 
-              variant="ghost" 
-              onClick={toggleFullscreen}
-              size="sm"
-              className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] h-8"
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </Button>
-          </EnhancedTooltip>
-
-          <UserMenu />
+          <Button 
+            variant="ghost" 
+            onClick={toggleFullscreen}
+            className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] transition-transform hover:scale-110"
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+          </Button>
 
           {isMobile && (
             <Sheet>
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  size="sm"
-                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:hidden h-8"
+                  className="text-[#9ca3af] hover:text-[#e4e5e7] hover:bg-[#2d3748] md:hidden"
                 >
                   <Menu size={16} />
                 </Button>
