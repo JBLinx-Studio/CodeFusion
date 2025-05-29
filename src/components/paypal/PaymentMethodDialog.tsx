@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -14,16 +15,6 @@ interface PaymentMethodDialogProps {
   selectedTier: 'starter' | 'developer' | 'pro' | 'team-starter' | 'team-pro' | null;
   onSuccess: () => void;
 }
-
-// For sandbox testing, we need to either create plans via API or use test plan IDs
-// Since sandbox doesn't have business dashboard plans, we'll use a test approach
-const PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // This needs to be created in sandbox or we handle it differently
-  developer: 'SANDBOX-DEV-PLAN-TEST',
-  pro: 'SANDBOX-PRO-PLAN-TEST',
-  'team-starter': 'SANDBOX-TEAM-START-TEST',
-  'team-pro': 'SANDBOX-TEAM-PRO-TEST',
-};
 
 const PLAN_PRICES = {
   starter: '$5.00',
@@ -51,21 +42,22 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [subscriptionStep, setSubscriptionStep] = useState<'select' | 'processing' | 'complete' | 'error'>('select');
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string>('');
+  const [localTestMode, setLocalTestMode] = useState(false);
   const { updateUserProfile } = useAuth();
   
   const configService = PayPalConfigService.getInstance();
-  const config = configService.getConfig();
 
-  console.log('PaymentMethodDialog - selectedTier:', selectedTier);
-  console.log('PayPal environment:', config.environment);
+  // Initialize local test mode from service
+  useEffect(() => {
+    const config = configService.getConfig();
+    setLocalTestMode(config.isTestMode);
+  }, []);
 
   // Get the correct plan ID based on environment and tier
   const getPlanId = (tier: string): string => {
-    if (config.isTestMode) {
-      // For sandbox, we'll create plans dynamically
+    if (localTestMode) {
       return 'SANDBOX_PLAN_DYNAMIC';
     } else {
-      // Live plan IDs
       const livePlanIds = {
         starter: 'P-9GJ74476BD483620ENA2XHZA',
         developer: 'P-LIVE-DEV-PLAN-ID',
@@ -80,7 +72,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
-      console.log('Payment dialog opened - resetting state');
       setSubscriptionStep('select');
       setSubscriptionId(null);
       setErrorDetails('');
@@ -88,27 +79,22 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   }, [open]);
 
   const handlePaymentSuccess = async (subscriptionId: string) => {
-    console.log('Payment successful - subscription ID:', subscriptionId);
-    
     try {
       setSubscriptionStep('processing');
       
-      // Store subscription data for sandbox testing
       const subscriptionData = {
         id: subscriptionId,
         tier: selectedTier,
         status: 'active',
         createdAt: new Date().toISOString(),
-        planId: PLAN_IDS[selectedTier!],
-        environment: 'sandbox'
+        planId: getPlanId(selectedTier!),
+        environment: localTestMode ? 'sandbox' : 'live'
       };
 
-      // Store in localStorage for testing
       const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
       const updatedSubscriptions = [...existingSubscriptions, subscriptionData];
       localStorage.setItem('user_subscriptions', JSON.stringify(updatedSubscriptions));
 
-      // Update user profile
       await updateUserProfile({
         tier: selectedTier!,
         subscriptionId: subscriptionId
@@ -130,8 +116,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const handlePaymentError = (error: any) => {
-    console.error('Payment error details:', error);
-    
     let errorMessage = 'Unknown payment error';
     
     if (typeof error === 'string') {
@@ -142,7 +126,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       errorMessage = error.message;
     }
     
-    // Add sandbox-specific guidance
     if (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID')) {
       errorMessage += '\n\nFor sandbox testing, you need to create subscription plans in your PayPal sandbox account first.';
     }
@@ -157,7 +140,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   };
 
   const retryPayment = () => {
-    console.log('Retrying payment process');
     setSubscriptionStep('select');
     setErrorDetails('');
   };
@@ -180,12 +162,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </DialogTitle>
           <DialogDescription className="text-[#9ca3af]">
             {subscriptionStep === 'complete' 
-              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated (${config.environment})`
+              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated`
               : subscriptionStep === 'error'
               ? 'There was an issue processing your payment'
               : subscriptionStep === 'processing'
               ? 'Please wait while we process your payment'
-              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month (${config.environment} mode)`
+              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month`
             }
           </DialogDescription>
         </DialogHeader>
@@ -199,9 +181,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <p className="text-[#9ca3af] text-sm mt-2">
               Subscription ID: {subscriptionId?.substring(0, 15)}...
             </p>
-            <p className="text-yellow-400 text-xs mt-2">
-              (Sandbox Test Mode)
-            </p>
           </div>
         ) : subscriptionStep === 'error' ? (
           <div className="text-center py-6">
@@ -212,15 +191,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <p className="text-[#9ca3af] text-sm mt-2 mb-4 whitespace-pre-line">
               {errorDetails || 'Please try again or contact support.'}
             </p>
-            <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4 mb-4">
-              <p className="text-blue-400 text-xs">
-                <strong>Sandbox Testing Note:</strong><br/>
-                • Account: sb-7ommm28924697@business.example.com<br/>
-                • Plans need to be created in sandbox dashboard<br/>
-                • Or use PayPal's REST API to create plans<br/>
-                • Only Starter plan is currently configured for testing
-              </p>
-            </div>
             <Button 
               onClick={retryPayment}
               className="mt-4 bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
@@ -246,7 +216,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     </div>
                     <div>
                       <div className="text-sm font-medium">PayPal</div>
-                      <div className="text-xs text-[#9ca3af]">Sandbox testing mode</div>
+                      <div className="text-xs text-[#9ca3af]">Secure payment processing</div>
                     </div>
                   </div>
                   {paymentMethod === 'paypal' && <Check className="h-5 w-5 text-[#6366f1]" />}
@@ -280,21 +250,46 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     disabled={subscriptionStep === 'processing'}
                   />
                   
-                  <div className={`text-xs text-center p-3 rounded-md border ${
-                    config.isTestMode 
-                      ? 'text-yellow-400 bg-yellow-900/20 border-yellow-500/20' 
-                      : 'text-green-400 bg-green-900/20 border-green-500/20'
-                  }`}>
-                    <p className="font-medium">
-                      {config.isTestMode ? '🧪 SANDBOX TESTING' : '🌐 LIVE PAYMENTS'}
-                    </p>
-                    <p className="mt-1">Environment: {config.environment}</p>
-                    <p>Plan ID: {currentPlanId}</p>
-                    {config.isTestMode && (
-                      <p className="text-blue-400 mt-2">
-                        Use sandbox account: sb-7ommm28924697@business.example.com
-                      </p>
-                    )}
+                  {/* Payment Mode Toggle Section */}
+                  <div className="space-y-3">
+                    {/* Live Payment Mode */}
+                    <div 
+                      className={`p-3 rounded-md border cursor-pointer transition-all ${
+                        !localTestMode 
+                          ? 'border-green-500 bg-green-900/20 text-green-400' 
+                          : 'border-[#374151] bg-[#1f2937] text-[#9ca3af] hover:border-green-500/50'
+                      }`}
+                      onClick={() => setLocalTestMode(false)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">🌐 LIVE PAYMENT MODE</p>
+                          <p className="text-xs mt-1">Environment: live</p>
+                          <p className="text-xs">Plan ID: {getPlanId(selectedTier).substring(0, 20)}...</p>
+                        </div>
+                        {!localTestMode && <Check className="w-5 h-5" />}
+                      </div>
+                    </div>
+
+                    {/* Sandbox Testing Mode */}
+                    <div 
+                      className={`p-3 rounded-md border cursor-pointer transition-all ${
+                        localTestMode 
+                          ? 'border-yellow-500 bg-yellow-900/20 text-yellow-400' 
+                          : 'border-[#374151] bg-[#1f2937] text-[#9ca3af] hover:border-yellow-500/50'
+                      }`}
+                      onClick={() => setLocalTestMode(true)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">⚠️ SANDBOX TESTING MODE</p>
+                          <p className="text-xs mt-1">Account: sb-7ommm28924697@business.example.com</p>
+                          <p className="text-xs">Plan ID: {getPlanId(selectedTier)}</p>
+                          <p className="text-xs text-blue-400 mt-1">Note: Plans may need to be created in your sandbox account first</p>
+                        </div>
+                        {localTestMode && <Check className="w-5 h-5" />}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
