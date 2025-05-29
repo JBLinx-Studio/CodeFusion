@@ -38,22 +38,21 @@ export class PayPalAPIService {
   }
 
   private getConfig() {
-    // Always use sandbox for API operations when in test mode
-    const isTestMode = localStorage.getItem('paypal_test_mode') === 'true' || process.env.NODE_ENV === 'development';
+    const isProduction = process.env.NODE_ENV === 'production';
     
-    if (isTestMode) {
+    if (isProduction) {
+      // Live credentials
+      return {
+        clientId: 'Abrc68jTAU0GltdLz1FYYLMLaD5Y952gRrHtwrzeWI4-C8nlafFLdcH95KXpo3Fc6zYZsdIkiV7Jnl34',
+        clientSecret: '', // You'll need to provide this
+        baseUrl: 'https://api-m.paypal.com'
+      };
+    } else {
       // Sandbox credentials
       return {
         clientId: 'AfaF0EX_vYoZ5D3-P4RSCZ0FjFwHY3v88MhbcytGX9uTkQdDFrQKKFNDzwNsjdn3wPgSPsqrJsdho7RH',
         clientSecret: 'EJHoNOgMSLIDSnUIVsQ76aCO0xdHP7AMS51X4-SpxtFo8hTdcy-lirfQuAgU3PkMgulWO9y4fqFZMPzF',
         baseUrl: 'https://api-m.sandbox.paypal.com'
-      };
-    } else {
-      // Live credentials (you'll need to provide the client secret)
-      return {
-        clientId: 'Abrc68jTAU0GltdLz1FYYLMLaD5Y952gRrHtwrzeWI4-C8nlafFLdcH95KXpo3Fc6zYZsdIkiV7Jnl34',
-        clientSecret: '', // You'll need to provide this for live
-        baseUrl: 'https://api-m.paypal.com'
       };
     }
   }
@@ -96,8 +95,8 @@ export class PayPalAPIService {
     const token = await this.getAccessToken();
 
     const productData = {
-      name: 'CodeFusion Starter',
-      description: 'Essential tools for serious developers - unlimited private projects, custom domains, and email support',
+      name: 'CodeFusion Starter Plan',
+      description: 'Professional development tools for individual developers',
       type: 'SERVICE',
       category: 'SOFTWARE'
     };
@@ -156,7 +155,7 @@ export class PayPalAPIService {
           currency_code: 'USD'
         },
         setup_fee_failure_action: 'CONTINUE',
-        payment_failure_threshold: 1
+        payment_failure_threshold: 3
       }
     };
 

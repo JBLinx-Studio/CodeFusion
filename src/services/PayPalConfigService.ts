@@ -22,16 +22,10 @@ export class PayPalConfigService {
         : 'Abrc68jTAU0GltdLz1FYYLMLaD5Y952gRrHtwrzeWI4-C8nlafFLdcH95KXpo3Fc6zYZsdIkiV7Jnl34',
       planId: isTestMode 
         ? 'SANDBOX_PLAN_TO_BE_CREATED'
-        : 'P-9GJ74476BD483620ENA2XHZA', // Your live plan ID
+        : 'P-9GJ74476BD483620ENA2XHZA',
       environment: isTestMode ? 'sandbox' : 'live',
       isTestMode
     };
-
-    console.log('PayPal Config initialized:', {
-      environment: this.config.environment,
-      isTestMode: this.config.isTestMode,
-      clientId: this.config.clientId.substring(0, 20) + '...'
-    });
   }
 
   static getInstance(): PayPalConfigService {
@@ -89,22 +83,5 @@ export class PayPalConfigService {
   clearSandboxData(): void {
     localStorage.removeItem('paypal_sandbox_plan_id');
     this.sandboxPlanId = null;
-  }
-
-  // Get the correct script URL for PayPal SDK
-  getPayPalScriptUrl(): string {
-    const baseUrl = 'https://www.paypal.com/sdk/js';
-    const params = new URLSearchParams({
-      'client-id': this.config.clientId,
-      'vault': 'true',
-      'intent': 'subscription',
-      'currency': 'USD',
-      'components': 'buttons',
-      'debug': this.config.isTestMode.toString(),
-      'enable-funding': 'paypal,paylater,card',
-      'data-environment': this.config.environment
-    });
-    
-    return `${baseUrl}?${params.toString()}`;
   }
 }
