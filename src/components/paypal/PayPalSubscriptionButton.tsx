@@ -12,14 +12,36 @@ interface PayPalSubscriptionButtonProps {
   onSuccess: (subscriptionId: string) => void;
   onError: (error: any) => void;
   disabled?: boolean;
+  selectedTier?: 'starter' | 'developer' | 'pro' | 'team-starter' | 'team-pro';
+  currentMode?: 'live' | 'sandbox';
 }
+
+// Live plan IDs
+const LIVE_PLAN_IDS = {
+  starter: 'P-9GJ74476BD483620ENA2XHZA',
+  developer: 'SANDBOX-DEV-PLAN-TEST',
+  pro: 'SANDBOX-PRO-PLAN-TEST',
+  'team-starter': 'SANDBOX-TEAM-START-TEST',
+  'team-pro': 'SANDBOX-TEAM-PRO-TEST',
+};
+
+// Sandbox plan IDs - replace with your actual sandbox plan IDs
+const SANDBOX_PLAN_IDS = {
+  starter: 'P-1234567890ABCDEFGHIJ',
+  developer: 'P-2234567890ABCDEFGHIJ', 
+  pro: 'P-3234567890ABCDEFGHIJ',
+  'team-starter': 'P-4234567890ABCDEFGHIJ',
+  'team-pro': 'P-5234567890ABCDEFGHIJ',
+};
 
 export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> = ({
   planId,
   planName,
   onSuccess,
   onError,
-  disabled = false
+  disabled = false,
+  selectedTier,
+  currentMode
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [actualPlanId, setActualPlanId] = useState<string>(planId);
@@ -32,73 +54,78 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
     planId,
     actualPlanId,
     environment: config.environment,
-    isTestMode: config.isTestMode
+    isTestMode: config.isTestMode,
+    selectedTier,
+    currentMode
   });
 
-  // Get the correct plan ID based on environment
+  // Resolve the actual plan ID based on environment and tier
   useEffect(() => {
-    const initializePlanId = async () => {
-      if (config.isTestMode) {
+    const resolvePlanId = async () => {
+      if (!selectedTier) {
+        setActualPlanId(planId);
+        return;
+      }
+
+      if (currentMode === 'sandbox' || config.isTestMode) {
+        // First check if we have a stored sandbox plan
+        const storedPlanId = localStorage.getItem(`sandbox_plan_${selectedTier}`);
+        if (storedPlanId) {
+          console.log('Using stored sandbox plan ID:', storedPlanId);
+          setActualPlanId(storedPlanId);
+          return;
+        }
+
+        // Use predefined sandbox plan ID
+        const sandboxPlanId = SANDBOX_PLAN_IDS[selectedTier];
+        if (sandboxPlanId && sandboxPlanId !== 'P-1234567890ABCDEFGHIJ') {
+          console.log('Using predefined sandbox plan ID:', sandboxPlanId);
+          setActualPlanId(sandboxPlanId);
+          return;
+        }
+
+        // If no predefined plan, try to create one
         try {
           const sandboxPlanId = await configService.ensureSandboxPlan();
           setActualPlanId(sandboxPlanId);
-          console.log('Using sandbox plan ID:', sandboxPlanId);
+          console.log('Using created sandbox plan ID:', sandboxPlanId);
         } catch (error) {
           console.error('Failed to get sandbox plan ID:', error);
           setActualPlanId('SANDBOX_FALLBACK_PLAN');
         }
       } else {
-        setActualPlanId(planId);
-        console.log('Using live plan ID:', planId);
+        // Use live plan ID
+        const livePlanId = LIVE_PLAN_IDS[selectedTier];
+        console.log('Using live plan ID:', livePlanId);
+        setActualPlanId(livePlanId);
       }
     };
 
-    initializePlanId();
-  }, [planId, config.isTestMode]);
+    resolvePlanId();
+  }, [planId, config.isTestMode, selectedTier, currentMode]);
 
   const createSubscription = async (data: any, actions: any) => {
     console.log('Creating subscription for plan:', actualPlanId);
     setIsProcessing(true);
 
     try {
-      if (config.isTestMode && actualPlanId === 'SANDBOX_FALLBACK_PLAN') {
-        // Fallback for sandbox testing when plan creation fails
-        console.log('Using fallback subscription creation for sandbox');
-        
-        const subscriptionData = await actions.subscription.create({
-          plan_id: actualPlanId,
-          application_context: {
-            shipping_preference: 'NO_SHIPPING',
-            user_action: 'SUBSCRIBE_NOW',
-            brand_name: 'CodeFusion',
-            locale: 'en-US',
-            return_url: window.location.origin + '/?success=true',
-            cancel_url: window.location.origin + '/?cancelled=true'
-          }
-        });
+      const subscriptionData = await actions.subscription.create({
+        plan_id: actualPlanId,
+        application_context: {
+          shipping_preference: 'NO_SHIPPING',
+          user_action: 'SUBSCRIBE_NOW',
+          brand_name: 'CodeFusion',
+          locale: 'en-US',
+          return_url: window.location.origin + '/?success=true',
+          cancel_url: window.location.origin + '/?cancelled=true'
+        }
+      });
 
-        console.log('Fallback subscription created:', subscriptionData);
-        return subscriptionData;
-      } else {
-        // Standard subscription creation
-        const subscriptionData = await actions.subscription.create({
-          plan_id: actualPlanId,
-          application_context: {
-            shipping_preference: 'NO_SHIPPING',
-            user_action: 'SUBSCRIBE_NOW',
-            brand_name: 'CodeFusion',
-            locale: 'en-US',
-            return_url: window.location.origin + '/?success=true',
-            cancel_url: window.location.origin + '/?cancelled=true'
-          }
-        });
-
-        console.log('Subscription created successfully:', subscriptionData);
-        toast.success(`${planName} subscription initiated!`, {
-          description: `Environment: ${config.environment}`
-        });
-        return subscriptionData;
-      }
+      console.log('Subscription created successfully:', subscriptionData);
+      toast.success(`${planName} subscription initiated!`, {
+        description: `Environment: ${currentMode || config.environment}`
+      });
+      return subscriptionData;
     } catch (error) {
       console.error('Error creating subscription:', error);
       setIsProcessing(false);
@@ -124,7 +151,7 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
       console.log('Subscription details:', details);
       
       toast.success('Payment Successful!', {
-        description: `Your ${planName} subscription is now active (${config.environment}).`,
+        description: `Your ${planName} subscription is now active (${currentMode || config.environment}).`,
         duration: 5000,
       });
 
@@ -204,29 +231,29 @@ export const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> =
         />
         
         <div className={`mt-4 p-3 rounded-md border ${
-          config.isTestMode 
+          (currentMode === 'sandbox' || config.isTestMode)
             ? 'bg-yellow-900/20 border-yellow-500/20' 
             : 'bg-green-900/20 border-green-500/20'
         }`}>
           <div className="flex items-center justify-center space-x-2 mb-2">
-            {config.isTestMode ? (
+            {(currentMode === 'sandbox' || config.isTestMode) ? (
               <TestTube className="w-4 h-4 text-yellow-400" />
             ) : (
               <Globe className="w-4 h-4 text-green-400" />
             )}
             <p className={`text-xs font-medium ${
-              config.isTestMode ? 'text-yellow-400' : 'text-green-400'
+              (currentMode === 'sandbox' || config.isTestMode) ? 'text-yellow-400' : 'text-green-400'
             }`}>
-              {config.isTestMode ? 'SANDBOX TESTING MODE' : 'LIVE PAYMENT MODE'}
+              {(currentMode === 'sandbox' || config.isTestMode) ? 'SANDBOX TESTING MODE' : 'LIVE PAYMENT MODE'}
             </p>
           </div>
           <p className="text-xs text-center text-gray-400">
-            Environment: {config.environment}
+            Environment: {currentMode || config.environment}
           </p>
           <p className="text-xs text-center text-gray-400">
             Plan ID: {actualPlanId.substring(0, 25)}...
           </p>
-          {config.isTestMode && (
+          {(currentMode === 'sandbox' || config.isTestMode) && (
             <p className="text-xs text-center text-blue-400 mt-2">
               Use sandbox PayPal credentials for testing
             </p>

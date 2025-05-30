@@ -24,6 +24,15 @@ const PLAN_IDS = {
   'team-pro': 'SANDBOX-TEAM-PRO-TEST',
 };
 
+// Sandbox plan IDs - these should be created in your PayPal sandbox dashboard
+const SANDBOX_PLAN_IDS = {
+  starter: 'P-1234567890ABCDEFGHIJ',  // Replace with your actual sandbox plan ID
+  developer: 'P-2234567890ABCDEFGHIJ',
+  pro: 'P-3234567890ABCDEFGHIJ',
+  'team-starter': 'P-4234567890ABCDEFGHIJ',
+  'team-pro': 'P-5234567890ABCDEFGHIJ',
+};
+
 const PLAN_PRICES = {
   starter: '$5.00',
   developer: '$9.00',
@@ -51,6 +60,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string>('');
   const [currentMode, setCurrentMode] = useState<'live' | 'sandbox'>('live');
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const { updateUserProfile } = useAuth();
   
   const configService = PayPalConfigService.getInstance();
@@ -83,8 +93,55 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       setSubscriptionStep('select');
       setSubscriptionId(null);
       setErrorDetails('');
+      setIsCreatingPlan(false);
     }
   }, [open]);
+
+  const createSandboxPlan = async (): Promise<string> => {
+    setIsCreatingPlan(true);
+    try {
+      const { PayPalAPIService } = await import('@/services/PayPalAPIService');
+      const apiService = PayPalAPIService.getInstance();
+      const { planId } = await apiService.createSandboxPlan();
+      
+      // Store the created plan ID for this tier
+      localStorage.setItem(`sandbox_plan_${selectedTier}`, planId);
+      
+      toast.success('Sandbox plan created successfully!');
+      return planId;
+    } catch (error) {
+      console.error('Failed to create sandbox plan:', error);
+      toast.error('Failed to create sandbox plan', {
+        description: 'Using fallback plan ID'
+      });
+      // Return the existing sandbox plan ID as fallback
+      return SANDBOX_PLAN_IDS[selectedTier!] || 'P-1234567890ABCDEFGHIJ';
+    } finally {
+      setIsCreatingPlan(false);
+    }
+  };
+
+  const getPlanId = async (): Promise<string> => {
+    if (currentMode === 'live') {
+      return PLAN_IDS[selectedTier!];
+    } else {
+      // For sandbox, check if we have a stored plan ID first
+      const storedPlanId = localStorage.getItem(`sandbox_plan_${selectedTier}`);
+      if (storedPlanId) {
+        console.log('Using stored sandbox plan ID:', storedPlanId);
+        return storedPlanId;
+      }
+      
+      // Try to use predefined sandbox plan ID first
+      const predefinedPlanId = SANDBOX_PLAN_IDS[selectedTier!];
+      if (predefinedPlanId && predefinedPlanId !== 'P-1234567890ABCDEFGHIJ') {
+        return predefinedPlanId;
+      }
+      
+      // If no predefined plan, create one dynamically
+      return await createSandboxPlan();
+    }
+  };
 
   const handlePaymentSuccess = async (subscriptionId: string) => {
     console.log('Payment successful - subscription ID:', subscriptionId);
@@ -97,7 +154,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         tier: selectedTier,
         status: 'active',
         createdAt: new Date().toISOString(),
-        planId: PLAN_IDS[selectedTier!],
+        planId: await getPlanId(),
         environment: currentMode
       };
 
@@ -138,8 +195,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       errorMessage = error.message;
     }
     
-    if (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID')) {
-      errorMessage += '\n\nFor sandbox testing, you need to create subscription plans in your PayPal sandbox account first.';
+    if (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID') || errorMessage.includes('INVALID_PARAMETER_SYNTAX')) {
+      errorMessage += '\n\nSandbox Plan Issue: Please ensure your PayPal sandbox account has subscription plans created, or click "Create Sandbox Plan" to create one automatically.';
     }
     
     setErrorDetails(errorMessage);
@@ -161,7 +218,13 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     return null;
   }
 
-  const currentPlanId = currentMode === 'sandbox' ? 'SANDBOX_PLAN_DYNAMIC' : PLAN_IDS[selectedTier];
+  const handleCreateSandboxPlan = async () => {
+    try {
+      await createSandboxPlan();
+    } catch (error) {
+      console.error('Error creating sandbox plan:', error);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,6 +270,20 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <p className="text-[#9ca3af] text-sm mt-2 mb-4 whitespace-pre-line">
               {errorDetails || 'Please try again or contact support.'}
             </p>
+            {currentMode === 'sandbox' && (
+              <div className="space-y-2 mb-4">
+                <Button 
+                  onClick={handleCreateSandboxPlan}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled={isCreatingPlan}
+                >
+                  {isCreatingPlan ? 'Creating Plan...' : 'Create Sandbox Plan'}
+                </Button>
+                <p className="text-xs text-blue-400">
+                  This will create a subscription plan in your sandbox account
+                </p>
+              </div>
+            )}
             <Button 
               onClick={retryPayment}
               className="mt-4 bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
@@ -259,11 +336,13 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               {paymentMethod === 'paypal' && (
                 <div className="space-y-4">
                   <PayPalSubscriptionButton
-                    planId={currentPlanId}
+                    planId="dynamic" // This will be resolved in the button component
                     planName={PLAN_NAMES[selectedTier]}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
-                    disabled={subscriptionStep === 'processing'}
+                    disabled={subscriptionStep === 'processing' || isCreatingPlan}
+                    selectedTier={selectedTier}
+                    currentMode={currentMode}
                   />
                   
                   {/* Mode Selection */}
@@ -296,7 +375,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                         🧪 SANDBOX TESTING MODE
                       </p>
                       <p className="text-xs mt-1">Account: sb-7ommm28924697@business.example.com</p>
-                      <p className="text-xs">Plan ID: {currentPlanId}</p>
+                      <p className="text-xs">Plan ID: {SANDBOX_PLAN_IDS[selectedTier] || 'Will be created'}</p>
                       {currentMode === 'sandbox' && <p className="text-xs mt-1">✅ Currently Selected</p>}
                     </div>
                   </div>
