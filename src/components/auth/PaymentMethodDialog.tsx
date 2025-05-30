@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -6,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Check, CreditCard, AlertCircle } from 'lucide-react';
 import { PayPalSubscriptionButton } from '../paypal/PayPalSubscriptionButton';
+import { PayPalConfigService } from '@/services/PayPalConfigService';
 
 interface PaymentMethodDialogProps {
   open: boolean;
@@ -14,10 +16,8 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// For sandbox testing, we need to either create plans via API or use test plan IDs
-// Since sandbox doesn't have business dashboard plans, we'll use a test approach
 const PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // This needs to be created in sandbox or we handle it differently
+  starter: 'P-9GJ74476BD483620ENA2XHZA',
   developer: 'SANDBOX-DEV-PLAN-TEST',
   pro: 'SANDBOX-PRO-PLAN-TEST',
   'team-starter': 'SANDBOX-TEAM-START-TEST',
@@ -50,9 +50,31 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [subscriptionStep, setSubscriptionStep] = useState<'select' | 'processing' | 'complete' | 'error'>('select');
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string>('');
+  const [currentMode, setCurrentMode] = useState<'live' | 'sandbox'>('live');
   const { updateUserProfile } = useAuth();
+  
+  const configService = PayPalConfigService.getInstance();
+  const config = configService.getConfig();
 
   console.log('PaymentMethodDialog - selectedTier:', selectedTier);
+
+  // Initialize current mode based on config
+  useEffect(() => {
+    setCurrentMode(config.isTestMode ? 'sandbox' : 'live');
+  }, [config.isTestMode]);
+
+  const handleModeSwitch = (mode: 'live' | 'sandbox') => {
+    console.log('Switching to mode:', mode);
+    const isTestMode = mode === 'sandbox';
+    
+    // Update the config service
+    configService.toggleTestMode(isTestMode);
+    setCurrentMode(mode);
+    
+    toast.info(`Switched to ${mode} mode`, {
+      description: mode === 'sandbox' ? 'Using sandbox environment for testing' : 'Using live environment for real payments'
+    });
+  };
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -70,22 +92,19 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     try {
       setSubscriptionStep('processing');
       
-      // Store subscription data for sandbox testing
       const subscriptionData = {
         id: subscriptionId,
         tier: selectedTier,
         status: 'active',
         createdAt: new Date().toISOString(),
         planId: PLAN_IDS[selectedTier!],
-        environment: 'sandbox'
+        environment: currentMode
       };
 
-      // Store in localStorage for testing
       const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
       const updatedSubscriptions = [...existingSubscriptions, subscriptionData];
       localStorage.setItem('user_subscriptions', JSON.stringify(updatedSubscriptions));
 
-      // Update user profile
       await updateUserProfile({
         tier: selectedTier!,
         subscriptionId: subscriptionId
@@ -119,7 +138,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       errorMessage = error.message;
     }
     
-    // Add sandbox-specific guidance
     if (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID')) {
       errorMessage += '\n\nFor sandbox testing, you need to create subscription plans in your PayPal sandbox account first.';
     }
@@ -143,6 +161,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     return null;
   }
 
+  const currentPlanId = currentMode === 'sandbox' ? 'SANDBOX_PLAN_DYNAMIC' : PLAN_IDS[selectedTier];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[#1a1f2c] border-[#2d3748] text-white max-w-md">
@@ -155,12 +175,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </DialogTitle>
           <DialogDescription className="text-[#9ca3af]">
             {subscriptionStep === 'complete' 
-              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated (Sandbox Mode)`
+              ? `Your ${PLAN_NAMES[selectedTier]} subscription has been activated (${currentMode})`
               : subscriptionStep === 'error'
               ? 'There was an issue processing your payment'
               : subscriptionStep === 'processing'
               ? 'Please wait while we process your payment'
-              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month (Sandbox Testing)`
+              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month (${currentMode} mode)`
             }
           </DialogDescription>
         </DialogHeader>
@@ -175,7 +195,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               Subscription ID: {subscriptionId?.substring(0, 15)}...
             </p>
             <p className="text-yellow-400 text-xs mt-2">
-              (Sandbox Test Mode)
+              ({currentMode} mode)
             </p>
           </div>
         ) : subscriptionStep === 'error' ? (
@@ -187,15 +207,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <p className="text-[#9ca3af] text-sm mt-2 mb-4 whitespace-pre-line">
               {errorDetails || 'Please try again or contact support.'}
             </p>
-            <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4 mb-4">
-              <p className="text-blue-400 text-xs">
-                <strong>Sandbox Testing Note:</strong><br/>
-                • Account: sb-7ommm28924697@business.example.com<br/>
-                • Plans need to be created in sandbox dashboard<br/>
-                • Or use PayPal's REST API to create plans<br/>
-                • Only Starter plan is currently configured for testing
-              </p>
-            </div>
             <Button 
               onClick={retryPayment}
               className="mt-4 bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
@@ -221,7 +232,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     </div>
                     <div>
                       <div className="text-sm font-medium">PayPal</div>
-                      <div className="text-xs text-[#9ca3af]">Sandbox testing mode</div>
+                      <div className="text-xs text-[#9ca3af]">{currentMode} mode</div>
                     </div>
                   </div>
                   {paymentMethod === 'paypal' && <Check className="h-5 w-5 text-[#6366f1]" />}
@@ -248,20 +259,46 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               {paymentMethod === 'paypal' && (
                 <div className="space-y-4">
                   <PayPalSubscriptionButton
-                    planId={PLAN_IDS[selectedTier]}
+                    planId={currentPlanId}
                     planName={PLAN_NAMES[selectedTier]}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
                     disabled={subscriptionStep === 'processing'}
                   />
                   
-                  <div className="text-xs text-[#9ca3af] text-center">
-                    <p className="text-yellow-400">⚠️ SANDBOX TESTING MODE</p>
-                    <p>Account: sb-7ommm28924697@business.example.com</p>
-                    <p>Plan ID: {PLAN_IDS[selectedTier]}</p>
-                    <p className="text-blue-400 mt-2">
-                      Note: Plans may need to be created in your sandbox account first
-                    </p>
+                  {/* Mode Selection */}
+                  <div className="space-y-2">
+                    <div 
+                      onClick={() => handleModeSwitch('live')}
+                      className={`cursor-pointer p-3 rounded-md border transition-all ${
+                        currentMode === 'live' 
+                          ? 'text-green-400 bg-green-900/20 border-green-500/40' 
+                          : 'text-[#9ca3af] bg-[#1f2937] border-[#2d3748] hover:border-green-500/20'
+                      }`}
+                    >
+                      <p className="font-medium text-sm">
+                        🌐 LIVE PAYMENT MODE
+                      </p>
+                      <p className="text-xs mt-1">Environment: live</p>
+                      <p className="text-xs">Plan ID: {PLAN_IDS[selectedTier]}</p>
+                      {currentMode === 'live' && <p className="text-xs mt-1">✅ Currently Selected</p>}
+                    </div>
+
+                    <div 
+                      onClick={() => handleModeSwitch('sandbox')}
+                      className={`cursor-pointer p-3 rounded-md border transition-all ${
+                        currentMode === 'sandbox' 
+                          ? 'text-yellow-400 bg-yellow-900/20 border-yellow-500/40' 
+                          : 'text-[#9ca3af] bg-[#1f2937] border-[#2d3748] hover:border-yellow-500/20'
+                      }`}
+                    >
+                      <p className="font-medium text-sm">
+                        🧪 SANDBOX TESTING MODE
+                      </p>
+                      <p className="text-xs mt-1">Account: sb-7ommm28924697@business.example.com</p>
+                      <p className="text-xs">Plan ID: {currentPlanId}</p>
+                      {currentMode === 'sandbox' && <p className="text-xs mt-1">✅ Currently Selected</p>}
+                    </div>
                   </div>
                 </div>
               )}
