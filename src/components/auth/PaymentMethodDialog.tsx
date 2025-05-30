@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -16,17 +15,18 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-const PLAN_IDS = {
+// Live plan IDs
+const LIVE_PLAN_IDS = {
   starter: 'P-9GJ74476BD483620ENA2XHZA',
-  developer: 'SANDBOX-DEV-PLAN-TEST',
-  pro: 'SANDBOX-PRO-PLAN-TEST',
-  'team-starter': 'SANDBOX-TEAM-START-TEST',
-  'team-pro': 'SANDBOX-TEAM-PRO-TEST',
+  developer: 'P-LIVE-DEV-PLAN-ID',
+  pro: 'P-LIVE-PRO-PLAN-ID',
+  'team-starter': 'P-LIVE-TEAM-START-ID',
+  'team-pro': 'P-LIVE-TEAM-PRO-ID',
 };
 
 // Sandbox plan IDs - these should be created in your PayPal sandbox dashboard
 const SANDBOX_PLAN_IDS = {
-  starter: 'P-1234567890ABCDEFGHIJ',  // Replace with your actual sandbox plan ID
+  starter: 'P-1234567890ABCDEFGHIJ',
   developer: 'P-2234567890ABCDEFGHIJ',
   pro: 'P-3234567890ABCDEFGHIJ',
   'team-starter': 'P-4234567890ABCDEFGHIJ',
@@ -61,6 +61,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [errorDetails, setErrorDetails] = useState<string>('');
   const [currentMode, setCurrentMode] = useState<'live' | 'sandbox'>('live');
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
+  const [currentPlanId, setCurrentPlanId] = useState<string>('');
   const { updateUserProfile } = useAuth();
   
   const configService = PayPalConfigService.getInstance();
@@ -72,6 +73,28 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   useEffect(() => {
     setCurrentMode(config.isTestMode ? 'sandbox' : 'live');
   }, [config.isTestMode]);
+
+  // Update plan ID when mode or tier changes
+  useEffect(() => {
+    if (!selectedTier) return;
+
+    if (currentMode === 'live') {
+      const livePlanId = LIVE_PLAN_IDS[selectedTier];
+      setCurrentPlanId(livePlanId);
+      console.log('Setting live plan ID:', livePlanId);
+    } else {
+      // For sandbox, check if we have a stored plan ID first
+      const storedPlanId = localStorage.getItem(`sandbox_plan_${selectedTier}`);
+      if (storedPlanId) {
+        setCurrentPlanId(storedPlanId);
+        console.log('Using stored sandbox plan ID:', storedPlanId);
+      } else {
+        const sandboxPlanId = SANDBOX_PLAN_IDS[selectedTier];
+        setCurrentPlanId(sandboxPlanId);
+        console.log('Using predefined sandbox plan ID:', sandboxPlanId);
+      }
+    }
+  }, [currentMode, selectedTier]);
 
   const handleModeSwitch = (mode: 'live' | 'sandbox') => {
     console.log('Switching to mode:', mode);
@@ -106,6 +129,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       
       // Store the created plan ID for this tier
       localStorage.setItem(`sandbox_plan_${selectedTier}`, planId);
+      setCurrentPlanId(planId);
       
       toast.success('Sandbox plan created successfully!');
       return planId;
@@ -115,31 +139,11 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         description: 'Using fallback plan ID'
       });
       // Return the existing sandbox plan ID as fallback
-      return SANDBOX_PLAN_IDS[selectedTier!] || 'P-1234567890ABCDEFGHIJ';
+      const fallbackPlanId = SANDBOX_PLAN_IDS[selectedTier!] || 'P-1234567890ABCDEFGHIJ';
+      setCurrentPlanId(fallbackPlanId);
+      return fallbackPlanId;
     } finally {
       setIsCreatingPlan(false);
-    }
-  };
-
-  const getPlanId = async (): Promise<string> => {
-    if (currentMode === 'live') {
-      return PLAN_IDS[selectedTier!];
-    } else {
-      // For sandbox, check if we have a stored plan ID first
-      const storedPlanId = localStorage.getItem(`sandbox_plan_${selectedTier}`);
-      if (storedPlanId) {
-        console.log('Using stored sandbox plan ID:', storedPlanId);
-        return storedPlanId;
-      }
-      
-      // Try to use predefined sandbox plan ID first
-      const predefinedPlanId = SANDBOX_PLAN_IDS[selectedTier!];
-      if (predefinedPlanId && predefinedPlanId !== 'P-1234567890ABCDEFGHIJ') {
-        return predefinedPlanId;
-      }
-      
-      // If no predefined plan, create one dynamically
-      return await createSandboxPlan();
     }
   };
 
@@ -154,7 +158,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
         tier: selectedTier,
         status: 'active',
         createdAt: new Date().toISOString(),
-        planId: await getPlanId(),
+        planId: currentPlanId,
         environment: currentMode
       };
 
@@ -293,6 +297,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </div>
         ) : (
           <div className="mt-4">
+            {/* ... keep existing code (radio group for payment methods) */}
             <RadioGroup
               value={paymentMethod}
               onValueChange={(value) => setPaymentMethod(value as 'paypal' | 'creditCard')}
@@ -336,7 +341,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               {paymentMethod === 'paypal' && (
                 <div className="space-y-4">
                   <PayPalSubscriptionButton
-                    planId="dynamic" // This will be resolved in the button component
+                    planId={currentPlanId}
                     planName={PLAN_NAMES[selectedTier]}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
@@ -359,7 +364,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                         🌐 LIVE PAYMENT MODE
                       </p>
                       <p className="text-xs mt-1">Environment: live</p>
-                      <p className="text-xs">Plan ID: {PLAN_IDS[selectedTier]}</p>
+                      <p className="text-xs">Plan ID: {LIVE_PLAN_IDS[selectedTier]}</p>
                       {currentMode === 'live' && <p className="text-xs mt-1">✅ Currently Selected</p>}
                     </div>
 
@@ -375,7 +380,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                         🧪 SANDBOX TESTING MODE
                       </p>
                       <p className="text-xs mt-1">Account: sb-7ommm28924697@business.example.com</p>
-                      <p className="text-xs">Plan ID: {SANDBOX_PLAN_IDS[selectedTier] || 'Will be created'}</p>
+                      <p className="text-xs">Plan ID: {currentPlanId || SANDBOX_PLAN_IDS[selectedTier] || 'Will be created'}</p>
                       {currentMode === 'sandbox' && <p className="text-xs mt-1">✅ Currently Selected</p>}
                     </div>
                   </div>
