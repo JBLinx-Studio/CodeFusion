@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
@@ -337,7 +336,7 @@ body {
   
   /* Enhanced input system */
   .input-field {
-    @apply rounded-xl px-6 py-4 outline-none focus:ring-3 transition-all duration-400 backdrop-blur-lg;
+    @apply rounded-xl px-6 py-4 outline-none focus:ring-3 transition-all duration-300 backdrop-blur-lg;
     background: rgba(30, 41, 59, 0.95);
     border: 1px solid rgba(71, 85, 105, 0.6);
     color: #f8fafc;
@@ -359,7 +358,7 @@ body {
   
   /* Advanced action buttons */
   .action-button {
-    @apply transition-all duration-400 rounded-xl font-bold text-sm flex items-center gap-3 px-8 py-4 transform hover:-translate-y-2 hover:scale-105;
+    @apply transition-all duration-300 rounded-xl font-bold text-sm flex items-center gap-3 px-8 py-4 transform hover:-translate-y-2 hover:scale-105;
     box-shadow: 
       0 8px 16px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -421,7 +420,7 @@ body {
 
   /* Advanced utility classes */
   .hover-glow {
-    @apply transition-all duration-400;
+    @apply transition-all duration-300;
   }
 
   .hover-glow:hover {
@@ -469,7 +468,7 @@ body {
 
   /* Enhanced tab system */
   .tab {
-    @apply px-8 py-4 text-sm font-bold transition-all duration-400 border-b-3 focus:outline-none rounded-t-xl;
+    @apply px-8 py-4 text-sm font-bold transition-all duration-300 border-b-3 focus:outline-none rounded-t-xl;
     background: linear-gradient(135deg, 
       rgba(30, 41, 59, 0.6) 0%, 
       rgba(51, 65, 85, 0.4) 100%);
