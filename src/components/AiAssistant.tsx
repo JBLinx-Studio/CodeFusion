@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Code, SendHorizontal, Zap, AlertCircle, LogIn, User } from "lucide-react";
+import { Code, SendHorizontal, Zap, AlertCircle, LogIn, User, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { puterAI } from "@/services/PuterAIService";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     {
       id: 0,
       type: 'ai',
-      content: "Hi! I'm your AI coding assistant. I can help you with HTML, CSS, JavaScript, React, and more. Sign in to Puter to get started!",
+      content: "Hi! I'm your AI coding assistant. I can help you with HTML, CSS, JavaScript, React, and more. Connect to Puter for enhanced AI capabilities!",
       timestamp: new Date()
     }
   ]);
@@ -46,6 +46,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
       try {
         await puterAI.initialize();
         const status = puterAI.getStatus();
+        
+        console.log('Puter AI Status:', status);
         
         if (status.usingFallback) {
           setConnectionStatus('fallback');
@@ -101,16 +103,57 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   const handleSignIn = async () => {
     setIsSigningIn(true);
     try {
-      const success = await puterAI.signInWithPopup();
-      if (success) {
-        setConnectionStatus('connected');
-        toast.success("Successfully signed in to Puter!");
-      } else {
-        toast.error("Sign-in was cancelled or failed");
+      console.log('Opening Puter sign-in popup...');
+      
+      // Open the Puter sign-in popup directly
+      const signInUrl = 'https://puter.com/action/sign-in?embedded_in_popup=true&msg_id=1';
+      const popup = window.open(
+        signInUrl, 
+        'puter-signin', 
+        'width=500,height=600,scrollbars=yes,resizable=yes,location=yes,status=yes'
+      );
+      
+      if (!popup) {
+        toast.error("Popup blocked", {
+          description: "Please allow popups for this site and try again"
+        });
+        return;
       }
+
+      // Wait for popup to close
+      const checkClosed = setInterval(async () => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          console.log('Popup closed, checking sign-in status...');
+          
+          // Small delay to allow any post-message events to process
+          setTimeout(async () => {
+            const status = puterAI.getStatus();
+            console.log('Status after popup closed:', status);
+            
+            if (status.signedIn) {
+              setConnectionStatus('connected');
+              toast.success("Successfully signed in to Puter!");
+            } else {
+              toast.info("Sign-in window closed", {
+                description: "Please try signing in again if needed"
+              });
+            }
+          }, 1000);
+        }
+      }, 1000);
+      
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkClosed);
+        if (popup && !popup.closed) {
+          popup.close();
+        }
+      }, 300000);
+      
     } catch (error) {
       console.error('Sign-in error:', error);
-      toast.error("Failed to sign in to Puter");
+      toast.error("Failed to open sign-in window");
     } finally {
       setIsSigningIn(false);
     }
@@ -180,17 +223,41 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   const getStatusInfo = () => {
     switch (connectionStatus) {
       case 'connecting':
-        return { text: 'Connecting...', icon: null };
+        return { 
+          text: 'Connecting...', 
+          icon: <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />,
+          color: 'text-yellow-400'
+        };
       case 'connected':
-        return { text: 'Powered by Puter.js', icon: <Zap size={10} className="text-green-400" /> };
+        return { 
+          text: 'Connected to Puter.js', 
+          icon: <CheckCircle size={12} className="text-green-400" />,
+          color: 'text-green-400'
+        };
       case 'needs-signin':
-        return { text: 'Sign in required', icon: <User size={10} className="text-blue-400" /> };
+        return { 
+          text: 'Sign in required', 
+          icon: <User size={12} className="text-blue-400" />,
+          color: 'text-blue-400'
+        };
       case 'fallback':
-        return { text: 'Built-in AI', icon: <AlertCircle size={10} className="text-yellow-400" /> };
+        return { 
+          text: 'Built-in AI', 
+          icon: <AlertCircle size={12} className="text-yellow-400" />,
+          color: 'text-yellow-400'
+        };
       case 'failed':
-        return { text: 'Connection failed', icon: <AlertCircle size={10} className="text-red-400" /> };
+        return { 
+          text: 'Connection failed', 
+          icon: <XCircle size={12} className="text-red-400" />,
+          color: 'text-red-400'
+        };
       default:
-        return { text: 'Disconnected', icon: null };
+        return { 
+          text: 'Disconnected', 
+          icon: <XCircle size={12} className="text-gray-400" />,
+          color: 'text-gray-400'
+        };
     }
   };
 
@@ -199,9 +266,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
       case 'connecting':
         return 'Connecting to AI...';
       case 'connected':
-        return 'Ask for code help...';
+        return 'Ask for code help with Puter AI...';
       case 'needs-signin':
-        return 'Sign in to use AI features...';
+        return 'Sign in to use enhanced AI features...';
       case 'fallback':
         return 'Ask for code help...';
       case 'failed':
@@ -218,18 +285,16 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   return (
     <div className="fixed right-0 top-[56px] bottom-0 w-80 bg-[#1a1f2c] border-l border-[#374151] flex flex-col z-50 shadow-2xl transform transition-transform duration-300">
       <div className="flex items-center justify-between p-4 border-b border-[#374151]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="relative">
             <Code size={20} className="text-[#6366f1]" />
-            {statusInfo.icon && (
-              <div className="absolute -top-1 -right-1">
-                {statusInfo.icon}
-              </div>
-            )}
           </div>
           <div>
-            <h3 className="font-medium text-sm">AI Assistant</h3>
-            <p className="text-xs text-[#9ca3af]">{statusInfo.text}</p>
+            <h3 className="font-medium text-sm text-white">AI Assistant</h3>
+            <div className="flex items-center gap-2">
+              {statusInfo.icon}
+              <p className={`text-xs ${statusInfo.color}`}>{statusInfo.text}</p>
+            </div>
           </div>
         </div>
         <Button 
@@ -242,21 +307,54 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
         </Button>
       </div>
 
-      {/* Sign-in section */}
-      {connectionStatus === 'needs-signin' && (
+      {/* Enhanced Sign-in section */}
+      {(connectionStatus === 'needs-signin' || connectionStatus === 'fallback') && (
         <div className="p-4 border-b border-[#374151] bg-[#242a38]">
           <div className="text-center">
-            <p className="text-sm text-[#e4e5e7] mb-3">
-              Sign in to Puter to unlock full AI capabilities
-            </p>
-            <Button
-              onClick={handleSignIn}
-              disabled={isSigningIn}
-              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full"
-            >
-              <LogIn size={16} className="mr-2" />
-              {isSigningIn ? 'Signing in...' : 'Sign in to Puter'}
-            </Button>
+            <div className="mb-3">
+              <p className="text-sm text-[#e4e5e7] mb-1">
+                {connectionStatus === 'needs-signin' 
+                  ? 'Connect to Puter for enhanced AI capabilities' 
+                  : 'Puter.js unavailable - using built-in AI'
+                }
+              </p>
+              {connectionStatus === 'needs-signin' && (
+                <p className="text-xs text-[#9ca3af]">
+                  Get better responses and more features
+                </p>
+              )}
+            </div>
+            {connectionStatus === 'needs-signin' && (
+              <Button
+                onClick={handleSignIn}
+                disabled={isSigningIn}
+                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full"
+              >
+                <LogIn size={16} className="mr-2" />
+                {isSigningIn ? 'Opening sign-in...' : 'Sign in to Puter'}
+              </Button>
+            )}
+            {connectionStatus === 'fallback' && (
+              <Button
+                onClick={handleSignIn}
+                disabled={isSigningIn}
+                variant="outline"
+                className="border-[#4b5563] text-[#e4e5e7] hover:bg-[#2d3748] w-full"
+              >
+                <LogIn size={16} className="mr-2" />
+                {isSigningIn ? 'Opening sign-in...' : 'Try Puter Sign-in'}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Connected status display */}
+      {connectionStatus === 'connected' && (
+        <div className="p-3 border-b border-[#374151] bg-gradient-to-r from-green-900/20 to-blue-900/20">
+          <div className="flex items-center justify-center gap-2">
+            <CheckCircle size={16} className="text-green-400" />
+            <span className="text-sm text-green-400 font-medium">Connected to Puter AI</span>
           </div>
         </div>
       )}
