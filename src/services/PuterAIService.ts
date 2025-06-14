@@ -7,6 +7,7 @@ class PuterAIService {
   private puter: any = null;
   private initializationAttempted = false;
   private useFallback = false;
+  private signInListeners: Array<(status: boolean) => void> = [];
 
   async initialize() {
     if (this.initializationAttempted) return;
@@ -48,18 +49,18 @@ class PuterAIService {
       this.isInitialized = true;
       console.log('Puter initialized successfully');
       
-      // Try auto sign-in
-      await this.autoSignIn();
+      // Check if already signed in
+      await this.checkSignInStatus();
       
     } catch (error) {
-      console.log('Puter initialization failed, falling back to local AI:', error);
-      this.useFallback = true;
+      console.log('Puter initialization failed, but keeping Puter available for manual sign-in:', error);
       this.isInitialized = false;
+      // Don't use fallback immediately - let user try to sign in
     }
   }
 
-  private async autoSignIn() {
-    if (!this.puter || !this.isInitialized || this.useFallback) return;
+  private async checkSignInStatus() {
+    if (!this.puter || !this.isInitialized) return;
     
     try {
       if (!this.puter.auth) {
@@ -67,36 +68,58 @@ class PuterAIService {
         return;
       }
 
-      // Try to get current user first
-      try {
-        const user = await this.puter.auth.getUser();
-        if (user) {
-          this.isSignedIn = true;
-          console.log('Already signed in to Puter:', user.username);
-          return;
-        }
-      } catch (getUserError) {
-        console.log('No existing user session');
-      }
-
-      // Try automatic sign-in
-      try {
-        await this.puter.auth.signIn();
+      // Try to get current user
+      const user = await this.puter.auth.getUser();
+      if (user) {
         this.isSignedIn = true;
-        console.log('Successfully signed in to Puter');
-      } catch (signInError) {
-        console.log('Sign-in failed, trying anonymous');
-        try {
-          await this.puter.auth.signInAnonymously();
-          this.isSignedIn = true;
-          console.log('Signed in anonymously to Puter');
-        } catch (anonError) {
-          console.log('All sign-in methods failed');
-        }
+        console.log('Already signed in to Puter:', user.username);
+        this.notifySignInListeners(true);
       }
     } catch (error) {
-      console.log('Auto sign-in process failed:', error);
+      console.log('No existing user session');
+      this.isSignedIn = false;
+      this.notifySignInListeners(false);
     }
+  }
+
+  async signInWithPopup(): Promise<boolean> {
+    try {
+      // Open Puter sign-in in a popup
+      const signInUrl = 'https://puter.com/action/sign-in?embedded_in_popup=true&msg_id=1';
+      const popup = window.open(signInUrl, 'puter-signin', 'width=500,height=600,scrollbars=yes,resizable=yes');
+      
+      return new Promise((resolve) => {
+        const checkClosed = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkClosed);
+            // Check if sign-in was successful
+            this.checkSignInStatus().then(() => {
+              resolve(this.isSignedIn);
+            });
+          }
+        }, 1000);
+        
+        // Timeout after 5 minutes
+        setTimeout(() => {
+          clearInterval(checkClosed);
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+          resolve(false);
+        }, 300000);
+      });
+    } catch (error) {
+      console.log('Sign-in popup failed:', error);
+      return false;
+    }
+  }
+
+  onSignInStatusChange(callback: (status: boolean) => void) {
+    this.signInListeners.push(callback);
+  }
+
+  private notifySignInListeners(status: boolean) {
+    this.signInListeners.forEach(listener => listener(status));
   }
 
   async chat(prompt: string): Promise<string> {
@@ -105,18 +128,12 @@ class PuterAIService {
       await this.initialize();
     }
 
-    // Use fallback if Puter is not available
-    if (this.useFallback || !this.isInitialized || !this.puter) {
-      return fallbackAI.chat(prompt);
-    }
-
-    if (!this.isSignedIn) {
-      // Try to sign in again
-      await this.autoSignIn();
-      if (!this.isSignedIn) {
-        // Fall back to local AI if sign-in fails
-        return fallbackAI.chat(prompt);
+    // Use fallback if Puter is not available or user not signed in
+    if (this.useFallback || !this.isInitialized || !this.isSignedIn) {
+      if (!this.isSignedIn && this.isInitialized) {
+        return "Please sign in to Puter to use AI features. Click the 'Sign in to Puter' button above.";
       }
+      return fallbackAI.chat(prompt);
     }
 
     try {
@@ -153,11 +170,12 @@ class PuterAIService {
     return this.useFallback || (this.isInitialized && this.isSignedIn);
   }
 
-  getStatus(): { initialized: boolean; signedIn: boolean; usingFallback: boolean } {
+  getStatus(): { initialized: boolean; signedIn: boolean; usingFallback: boolean; canSignIn: boolean } {
     return {
       initialized: this.isInitialized,
       signedIn: this.isSignedIn,
-      usingFallback: this.useFallback
+      usingFallback: this.useFallback,
+      canSignIn: this.isInitialized && !this.isSignedIn
     };
   }
 }
