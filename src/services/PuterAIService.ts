@@ -1,44 +1,69 @@
 
+import { fallbackAI } from './FallbackAIService';
+
 class PuterAIService {
   private isInitialized = false;
   private isSignedIn = false;
   private puter: any = null;
+  private initializationAttempted = false;
+  private useFallback = false;
 
   async initialize() {
-    if (this.isInitialized) return;
+    if (this.initializationAttempted) return;
+    this.initializationAttempted = true;
     
     try {
-      // Import Puter SDK for browser
-      const puterModule = await import('puter');
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined') {
+        console.log('Not in browser environment, using fallback AI');
+        this.useFallback = true;
+        return;
+      }
+
+      // Try to import and initialize Puter SDK
+      console.log('Attempting to load Puter SDK...');
+      
+      // Use dynamic import with error handling
+      const puterModule = await import('puter').catch(error => {
+        console.log('Failed to import puter module:', error);
+        return null;
+      });
+      
+      if (!puterModule) {
+        console.log('Puter module not available, using fallback');
+        this.useFallback = true;
+        return;
+      }
+
       this.puter = puterModule.default || puterModule;
       
-      console.log('Puter module loaded:', this.puter);
-      
-      // Initialize Puter SDK
-      if (this.puter && typeof this.puter.init === 'function') {
-        await this.puter.init();
-        this.isInitialized = true;
-        console.log('Puter initialized successfully');
-        
-        // Auto sign-in after initialization
-        await this.autoSignIn();
-      } else {
-        throw new Error('Puter SDK not properly loaded');
+      if (!this.puter || typeof this.puter.init !== 'function') {
+        console.log('Puter SDK not properly structured, using fallback');
+        this.useFallback = true;
+        return;
       }
+
+      // Try to initialize Puter
+      await this.puter.init();
+      this.isInitialized = true;
+      console.log('Puter initialized successfully');
+      
+      // Try auto sign-in
+      await this.autoSignIn();
+      
     } catch (error) {
-      console.error('Failed to initialize Puter:', error);
-      // Don't throw the error, just log it to prevent blocking the app
+      console.log('Puter initialization failed, falling back to local AI:', error);
+      this.useFallback = true;
       this.isInitialized = false;
     }
   }
 
   private async autoSignIn() {
-    if (!this.puter || !this.isInitialized) return;
+    if (!this.puter || !this.isInitialized || this.useFallback) return;
     
     try {
-      // Check if Puter auth is available
       if (!this.puter.auth) {
-        console.log('Puter auth not available, skipping sign-in');
+        console.log('Puter auth not available');
         return;
       }
 
@@ -60,44 +85,44 @@ class PuterAIService {
         this.isSignedIn = true;
         console.log('Successfully signed in to Puter');
       } catch (signInError) {
-        console.log('Regular sign-in failed, trying anonymous access');
-        
-        // Fallback to anonymous if regular sign-in fails
+        console.log('Sign-in failed, trying anonymous');
         try {
           await this.puter.auth.signInAnonymously();
           this.isSignedIn = true;
           console.log('Signed in anonymously to Puter');
         } catch (anonError) {
-          console.error('All sign-in methods failed:', anonError);
+          console.log('All sign-in methods failed');
         }
       }
     } catch (error) {
-      console.error('Auto sign-in process failed:', error);
+      console.log('Auto sign-in process failed:', error);
     }
   }
 
   async chat(prompt: string): Promise<string> {
     // Always try to initialize if not already done
-    if (!this.isInitialized) {
+    if (!this.initializationAttempted) {
       await this.initialize();
     }
 
-    if (!this.isInitialized || !this.puter) {
-      throw new Error('Puter SDK is not available. Please check your internet connection.');
+    // Use fallback if Puter is not available
+    if (this.useFallback || !this.isInitialized || !this.puter) {
+      return fallbackAI.chat(prompt);
     }
 
     if (!this.isSignedIn) {
       // Try to sign in again
       await this.autoSignIn();
       if (!this.isSignedIn) {
-        throw new Error('Unable to connect to Puter AI service. Please try again later.');
+        // Fall back to local AI if sign-in fails
+        return fallbackAI.chat(prompt);
       }
     }
 
     try {
       // Check if AI functionality is available
       if (!this.puter.ai || typeof this.puter.ai.chat !== 'function') {
-        throw new Error('Puter AI functionality is not available');
+        return fallbackAI.chat(prompt);
       }
 
       // Use Puter's AI chat functionality
@@ -114,8 +139,8 @@ class PuterAIService {
 
       return response.message?.content || response.content || 'Sorry, I could not generate a response.';
     } catch (error) {
-      console.error('Puter AI chat error:', error);
-      throw new Error('Failed to get AI response from Puter service');
+      console.log('Puter AI chat error, using fallback:', error);
+      return fallbackAI.chat(prompt);
     }
   }
 
@@ -125,13 +150,14 @@ class PuterAIService {
   }
 
   isReady(): boolean {
-    return this.isInitialized && this.isSignedIn;
+    return this.useFallback || (this.isInitialized && this.isSignedIn);
   }
 
-  getStatus(): { initialized: boolean; signedIn: boolean; error?: string } {
+  getStatus(): { initialized: boolean; signedIn: boolean; usingFallback: boolean } {
     return {
       initialized: this.isInitialized,
-      signedIn: this.isSignedIn
+      signedIn: this.isSignedIn,
+      usingFallback: this.useFallback
     };
   }
 }

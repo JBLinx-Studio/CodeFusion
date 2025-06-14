@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Code, SendHorizontal, Zap } from "lucide-react";
+import { Code, SendHorizontal, Zap, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { puterAI } from "@/services/PuterAIService";
 import { toast } from "sonner";
@@ -24,12 +24,12 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     {
       id: 0,
       type: 'ai',
-      content: "Hi! I'm your AI coding assistant powered by Puter.js. I can help you with HTML, CSS, JavaScript, React, and more. Ask me anything!",
+      content: "Hi! I'm your AI coding assistant. I can help you with HTML, CSS, JavaScript, React, and more. Ask me anything!",
       timestamp: new Date()
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'failed' | 'disconnected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'fallback' | 'failed'>('connecting');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,46 +37,47 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   }, [messages]);
 
   useEffect(() => {
-    // Initialize Puter when component becomes visible
-    const initializePuter = async () => {
-      if (!visible || connectionStatus === 'connected') return;
-      
+    if (!visible) return;
+
+    const initializeAI = async () => {
       setConnectionStatus('connecting');
       
       try {
         await puterAI.initialize();
         const status = puterAI.getStatus();
         
-        if (status.initialized && status.signedIn) {
+        if (status.usingFallback) {
+          setConnectionStatus('fallback');
+          toast.info("AI Assistant ready", {
+            description: "Using built-in AI responses (Puter.js unavailable)"
+          });
+        } else if (status.initialized && status.signedIn) {
           setConnectionStatus('connected');
           toast.success("AI Assistant ready", {
             description: "Connected to Puter.js AI successfully"
           });
         } else if (status.initialized) {
-          setConnectionStatus('connected');
+          setConnectionStatus('fallback');
           toast.info("AI Assistant ready", {
-            description: "Connected to Puter.js (limited functionality)"
+            description: "Using fallback AI (limited Puter.js functionality)"
           });
         } else {
-          setConnectionStatus('failed');
-          toast.error("AI Assistant unavailable", {
-            description: "Failed to connect to Puter.js AI service"
+          setConnectionStatus('fallback');
+          toast.info("AI Assistant ready", {
+            description: "Using built-in AI responses"
           });
         }
       } catch (error) {
-        console.error('Failed to initialize Puter AI:', error);
-        setConnectionStatus('failed');
-        toast.error("AI Assistant unavailable", {
-          description: "Failed to connect to Puter.js AI service"
+        console.log('AI initialization completed with fallback');
+        setConnectionStatus('fallback');
+        toast.info("AI Assistant ready", {
+          description: "Using built-in AI responses"
         });
       }
     };
 
-    if (visible) {
-      // Small delay to ensure smooth UI transition
-      setTimeout(initializePuter, 200);
-    }
-  }, [visible, connectionStatus]);
+    initializeAI();
+  }, [visible]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -86,7 +87,6 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     e.preventDefault();
     if (!prompt.trim() || isLoading) return;
 
-    // Add user message
     const userMessage: Message = {
       id: messages.length,
       type: 'user',
@@ -100,7 +100,6 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     setIsLoading(true);
 
     try {
-      // Get AI response from Puter
       const aiResponse = await puterAI.chat(currentPrompt);
       
       const aiMessage: Message = {
@@ -116,13 +115,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
       const errorMessage: Message = {
         id: messages.length + 1,
         type: 'ai',
-        content: "Sorry, I'm having trouble connecting to the AI service right now. The Puter.js AI service might be temporarily unavailable. Please try again in a moment.",
+        content: "I'm having trouble generating a response right now. Please try asking your question again in a moment.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
       
       toast.error("AI Error", {
-        description: "Failed to get AI response from Puter service"
+        description: "Failed to get AI response"
       });
     } finally {
       setIsLoading(false);
@@ -130,7 +129,6 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   };
 
   const handleCodeBlockClick = (code: string) => {
-    // Extract code from markdown code blocks
     const codeMatch = code.match(/```(?:\w+)?\n([\s\S]+?)\n```/);
     if (codeMatch && codeMatch[1]) {
       onInsertCode(codeMatch[1]);
@@ -138,27 +136,26 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     }
   };
 
-  // Function to format message content with markdown-like syntax highlighting
   const formatMessageContent = (content: string) => {
-    // Replace code blocks with styled pre elements
     const formattedContent = content.replace(/```(?:\w+)?\n([\s\S]+?)\n```/g, (match, code) => {
       return `<pre class="bg-[#242a38] text-[#e4e5e7] p-3 rounded my-2 cursor-pointer hover:bg-[#2d3748] text-xs overflow-x-auto border border-[#374151]" data-code="${encodeURIComponent(code)}">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
     });
     
-    // Replace inline code
     return formattedContent.replace(/`([^`]+)`/g, '<code class="bg-[#242a38] text-[#e4e5e7] px-1 rounded text-xs">$1</code>');
   };
 
-  const getStatusText = () => {
+  const getStatusInfo = () => {
     switch (connectionStatus) {
       case 'connecting':
-        return 'Connecting...';
+        return { text: 'Connecting...', icon: null };
       case 'connected':
-        return 'Powered by Puter.js';
+        return { text: 'Powered by Puter.js', icon: <Zap size={10} className="text-green-400" /> };
+      case 'fallback':
+        return { text: 'Built-in AI', icon: <AlertCircle size={10} className="text-yellow-400" /> };
       case 'failed':
-        return 'Connection failed';
+        return { text: 'Connection failed', icon: <AlertCircle size={10} className="text-red-400" /> };
       default:
-        return 'Disconnected';
+        return { text: 'Disconnected', icon: null };
     }
   };
 
@@ -167,6 +164,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
       case 'connecting':
         return 'Connecting to AI...';
       case 'connected':
+      case 'fallback':
         return 'Ask for code help...';
       case 'failed':
         return 'AI service unavailable...';
@@ -174,6 +172,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
         return 'Starting AI service...';
     }
   };
+
+  const statusInfo = getStatusInfo();
 
   if (!visible) return null;
 
@@ -183,13 +183,15 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
         <div className="flex items-center gap-2">
           <div className="relative">
             <Code size={20} className="text-[#6366f1]" />
-            {connectionStatus === 'connected' && (
-              <Zap size={10} className="absolute -top-1 -right-1 text-green-400" />
+            {statusInfo.icon && (
+              <div className="absolute -top-1 -right-1">
+                {statusInfo.icon}
+              </div>
             )}
           </div>
           <div>
             <h3 className="font-medium text-sm">AI Assistant</h3>
-            <p className="text-xs text-[#9ca3af]">{getStatusText()}</p>
+            <p className="text-xs text-[#9ca3af]">{statusInfo.text}</p>
           </div>
         </div>
         <Button 
@@ -254,13 +256,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={getPlaceholderText()}
-          disabled={connectionStatus !== 'connected' || isLoading}
+          disabled={isLoading}
           className="flex-1 bg-[#242a38] border border-[#374151] rounded p-2 text-[#e4e5e7] text-sm focus:outline-none focus:border-[#6366f1] disabled:opacity-50"
         />
         <Button 
           type="submit"
           className="bg-[#6366f1] text-white hover:bg-[#4f46e5] h-9 w-9 p-0"
-          disabled={isLoading || !prompt.trim() || connectionStatus !== 'connected'}
+          disabled={isLoading || !prompt.trim()}
         >
           <SendHorizontal size={16} />
         </Button>
