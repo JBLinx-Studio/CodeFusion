@@ -1,5 +1,5 @@
 
-import puter from 'puter';
+import * as puter from 'puter';
 
 class PuterAIService {
   private isInitialized = false;
