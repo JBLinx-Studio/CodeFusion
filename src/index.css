@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
@@ -284,12 +285,14 @@ body {
   
   /* Advanced button system */
   .button-gradient {
-    @apply bg-gradient-to-r from-purple-500 via-blue-500 to-emerald-500 hover:from-purple-600 hover:via-blue-600 hover:to-emerald-600 text-white shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105;
+    @apply text-white shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105;
+    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
     background-size: 200% 200%;
     animation: gradientShift 6s ease infinite;
   }
   
   .button-gradient:hover {
+    background: linear-gradient(to right, #7c3aed, #2563eb, #059669);
     background-size: 150% 150%;
     box-shadow: 
       0 20px 40px rgba(139, 92, 246, 0.4),
@@ -365,12 +368,14 @@ body {
   }
   
   .primary-button {
-    @apply action-button bg-gradient-to-r from-purple-500 via-blue-500 to-emerald-500 hover:from-purple-600 hover:via-blue-600 hover:to-emerald-600 text-white shadow-xl;
+    @apply action-button text-white shadow-xl;
+    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
     background-size: 200% 200%;
     animation: gradientShift 8s ease infinite;
   }
   
   .primary-button:hover {
+    background: linear-gradient(to right, #7c3aed, #2563eb, #059669);
     box-shadow: 
       0 20px 40px rgba(139, 92, 246, 0.4),
       0 10px 20px rgba(59, 130, 246, 0.3),
@@ -428,7 +433,8 @@ body {
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-blue-500 to-emerald-500;
+    @apply bg-clip-text text-transparent;
+    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
     background-size: 200% 200%;
     animation: gradientShift 6s ease infinite;
   }
@@ -439,7 +445,8 @@ body {
 
   .animated-border::after {
     content: '';
-    @apply absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-purple-500 via-blue-500 to-emerald-500 transition-all duration-700;
+    @apply absolute bottom-0 left-0 w-0 h-1 transition-all duration-700;
+    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
   }
 
   .animated-border:hover::after {
