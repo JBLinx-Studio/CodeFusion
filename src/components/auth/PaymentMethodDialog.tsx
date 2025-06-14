@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Check, CreditCard, AlertCircle, Globe, TestTube } from 'lucide-react';
+import { Check, CreditCard, AlertCircle } from 'lucide-react';
 import { PayPalSubscriptionButton } from '../paypal/PayPalSubscriptionButton';
 import { PayPalConfigService } from '@/services/PayPalConfigService';
 
@@ -16,22 +16,12 @@ interface PaymentMethodDialogProps {
   onSuccess: () => void;
 }
 
-// Live plan IDs - replace with your actual PayPal plan IDs
-const LIVE_PLAN_IDS = {
-  starter: 'P-9GJ74476BD483620ENA2XHZA', // Your working live plan
-  developer: 'P-LIVE-DEV-PLAN-ID',
-  pro: 'P-LIVE-PRO-PLAN-ID',
-  'team-starter': 'P-LIVE-TEAM-START-ID',
-  'team-pro': 'P-LIVE-TEAM-PRO-ID',
-};
-
-// Sandbox plan IDs - will be created programmatically or use stored ones
-const SANDBOX_PLAN_IDS = {
-  starter: 'SANDBOX-STARTER-PLAN',
-  developer: 'SANDBOX-DEV-PLAN',
-  pro: 'SANDBOX-PRO-PLAN',
-  'team-starter': 'SANDBOX-TEAM-START-PLAN',
-  'team-pro': 'SANDBOX-TEAM-PRO-PLAN',
+const PLAN_IDS = {
+  starter: 'P-9GJ74476BD483620ENA2XHZA',
+  developer: 'SANDBOX-DEV-PLAN-TEST',
+  pro: 'SANDBOX-PRO-PLAN-TEST',
+  'team-starter': 'SANDBOX-TEAM-START-TEST',
+  'team-pro': 'SANDBOX-TEAM-PRO-TEST',
 };
 
 const PLAN_PRICES = {
@@ -61,19 +51,30 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string>('');
   const [currentMode, setCurrentMode] = useState<'live' | 'sandbox'>('live');
-  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const { updateUserProfile } = useAuth();
   
   const configService = PayPalConfigService.getInstance();
   const config = configService.getConfig();
 
   console.log('PaymentMethodDialog - selectedTier:', selectedTier);
-  console.log('Current payment mode:', currentMode);
 
-  // Initialize mode based on config
+  // Initialize current mode based on config
   useEffect(() => {
     setCurrentMode(config.isTestMode ? 'sandbox' : 'live');
   }, [config.isTestMode]);
+
+  const handleModeSwitch = (mode: 'live' | 'sandbox') => {
+    console.log('Switching to mode:', mode);
+    const isTestMode = mode === 'sandbox';
+    
+    // Update the config service
+    configService.toggleTestMode(isTestMode);
+    setCurrentMode(mode);
+    
+    toast.info(`Switched to ${mode} mode`, {
+      description: mode === 'sandbox' ? 'Using sandbox environment for testing' : 'Using live environment for real payments'
+    });
+  };
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -85,80 +86,25 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   }, [open]);
 
-  const handleModeSwitch = (mode: 'live' | 'sandbox') => {
-    console.log('Switching payment mode to:', mode);
-    setCurrentMode(mode);
-    configService.toggleTestMode(mode === 'sandbox');
-  };
-
-  const getCurrentPlanId = (): string => {
-    if (!selectedTier) return '';
-    
-    if (currentMode === 'live') {
-      return LIVE_PLAN_IDS[selectedTier];
-    } else {
-      // Check if we have a stored sandbox plan for this tier
-      const storedPlanId = localStorage.getItem(`sandbox_plan_${selectedTier}`);
-      if (storedPlanId) {
-        console.log(`Using stored sandbox plan for ${selectedTier}:`, storedPlanId);
-        return storedPlanId;
-      }
-      return SANDBOX_PLAN_IDS[selectedTier];
-    }
-  };
-
-  const createSandboxPlan = async () => {
-    if (!selectedTier) return;
-    
-    setIsCreatingPlan(true);
-    
-    try {
-      const { PayPalAPIService } = await import('@/services/PayPalAPIService');
-      const apiService = PayPalAPIService.getInstance();
-      
-      console.log(`Creating sandbox plan for ${selectedTier}...`);
-      const { planId } = await apiService.createSandboxPlan();
-      
-      // Store the created plan ID
-      localStorage.setItem(`sandbox_plan_${selectedTier}`, planId);
-      
-      toast.success('Sandbox Plan Created!', {
-        description: `${PLAN_NAMES[selectedTier]} sandbox plan is ready for testing.`
-      });
-      
-      console.log(`Sandbox plan created for ${selectedTier}:`, planId);
-    } catch (error) {
-      console.error('Failed to create sandbox plan:', error);
-      toast.error('Plan Creation Failed', {
-        description: 'Could not create sandbox plan. Please check your PayPal sandbox credentials.'
-      });
-    } finally {
-      setIsCreatingPlan(false);
-    }
-  };
-
   const handlePaymentSuccess = async (subscriptionId: string) => {
     console.log('Payment successful - subscription ID:', subscriptionId);
     
     try {
       setSubscriptionStep('processing');
       
-      // Store subscription data
       const subscriptionData = {
         id: subscriptionId,
         tier: selectedTier,
         status: 'active',
         createdAt: new Date().toISOString(),
-        planId: getCurrentPlanId(),
+        planId: PLAN_IDS[selectedTier!],
         environment: currentMode
       };
 
-      // Store in localStorage for testing
       const existingSubscriptions = JSON.parse(localStorage.getItem('user_subscriptions') || '[]');
       const updatedSubscriptions = [...existingSubscriptions, subscriptionData];
       localStorage.setItem('user_subscriptions', JSON.stringify(updatedSubscriptions));
 
-      // Update user profile
       await updateUserProfile({
         tier: selectedTier!,
         subscriptionId: subscriptionId
@@ -192,9 +138,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       errorMessage = error.message;
     }
     
-    // Add mode-specific guidance
-    if (currentMode === 'sandbox' && (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID'))) {
-      errorMessage += '\n\nSandbox plan may need to be created. Click "Create Sandbox Plan" to set it up.';
+    if (errorMessage.includes('plan') || errorMessage.includes('INVALID_RESOURCE_ID')) {
+      errorMessage += '\n\nFor sandbox testing, you need to create subscription plans in your PayPal sandbox account first.';
     }
     
     setErrorDetails(errorMessage);
@@ -216,7 +161,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     return null;
   }
 
-  const currentPlanId = getCurrentPlanId();
+  const currentPlanId = currentMode === 'sandbox' ? 'SANDBOX_PLAN_DYNAMIC' : PLAN_IDS[selectedTier];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -235,7 +180,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               ? 'There was an issue processing your payment'
               : subscriptionStep === 'processing'
               ? 'Please wait while we process your payment'
-              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month (${currentMode === 'sandbox' ? 'Sandbox Testing' : 'Live Payment'})`
+              : `Subscribe to ${PLAN_NAMES[selectedTier]} plan for ${PLAN_PRICES[selectedTier]}/month (${currentMode} mode)`
             }
           </DialogDescription>
         </DialogHeader>
@@ -250,7 +195,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               Subscription ID: {subscriptionId?.substring(0, 15)}...
             </p>
             <p className="text-yellow-400 text-xs mt-2">
-              ({currentMode === 'sandbox' ? 'Sandbox Test' : 'Live Payment'})
+              ({currentMode} mode)
             </p>
           </div>
         ) : subscriptionStep === 'error' ? (
@@ -262,18 +207,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <p className="text-[#9ca3af] text-sm mt-2 mb-4 whitespace-pre-line">
               {errorDetails || 'Please try again or contact support.'}
             </p>
-            {currentMode === 'sandbox' && (
-              <Button 
-                onClick={createSandboxPlan}
-                disabled={isCreatingPlan}
-                className="mb-4 bg-blue-600 hover:bg-blue-700"
-              >
-                {isCreatingPlan ? 'Creating...' : 'Create Sandbox Plan'}
-              </Button>
-            )}
             <Button 
               onClick={retryPayment}
-              className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
+              className="mt-4 bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:from-[#4338ca] hover:to-[#4f46e5] text-white"
             >
               Try Again
             </Button>
@@ -296,7 +232,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     </div>
                     <div>
                       <div className="text-sm font-medium">PayPal</div>
-                      <div className="text-xs text-[#9ca3af]">{currentMode === 'sandbox' ? 'Sandbox testing mode' : 'Live payment mode'}</div>
+                      <div className="text-xs text-[#9ca3af]">{currentMode} mode</div>
                     </div>
                   </div>
                   {paymentMethod === 'paypal' && <Check className="h-5 w-5 text-[#6366f1]" />}
@@ -330,47 +266,38 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                     disabled={subscriptionStep === 'processing'}
                   />
                   
-                  {/* Payment Mode Switching Panel */}
+                  {/* Mode Selection */}
                   <div className="space-y-2">
-                    {/* Live Payment Mode */}
                     <div 
                       onClick={() => handleModeSwitch('live')}
                       className={`cursor-pointer p-3 rounded-md border transition-all ${
                         currentMode === 'live' 
-                          ? 'bg-green-900/20 border-green-500/50 text-green-400' 
-                          : 'bg-gray-800/20 border-gray-600/20 text-gray-400 hover:border-gray-500/30'
+                          ? 'text-green-400 bg-green-900/20 border-green-500/40' 
+                          : 'text-[#9ca3af] bg-[#1f2937] border-[#2d3748] hover:border-green-500/20'
                       }`}
                     >
-                      <div className="flex items-center justify-center space-x-2">
-                        <Globe className="w-4 h-4" />
-                        <span className="font-medium">LIVE PAYMENT MODE</span>
-                        {currentMode === 'live' && <Check className="w-4 h-4" />}
-                      </div>
-                      <p className="text-xs text-center mt-1">Environment: live</p>
-                      <p className="text-xs text-center">Plan ID: {LIVE_PLAN_IDS[selectedTier]?.substring(0, 25)}...</p>
+                      <p className="font-medium text-sm">
+                        🌐 LIVE PAYMENT MODE
+                      </p>
+                      <p className="text-xs mt-1">Environment: live</p>
+                      <p className="text-xs">Plan ID: {PLAN_IDS[selectedTier]}</p>
+                      {currentMode === 'live' && <p className="text-xs mt-1">✅ Currently Selected</p>}
                     </div>
 
-                    {/* Sandbox Testing Mode */}
                     <div 
                       onClick={() => handleModeSwitch('sandbox')}
                       className={`cursor-pointer p-3 rounded-md border transition-all ${
                         currentMode === 'sandbox' 
-                          ? 'bg-yellow-900/20 border-yellow-500/50 text-yellow-400' 
-                          : 'bg-gray-800/20 border-gray-600/20 text-gray-400 hover:border-gray-500/30'
+                          ? 'text-yellow-400 bg-yellow-900/20 border-yellow-500/40' 
+                          : 'text-[#9ca3af] bg-[#1f2937] border-[#2d3748] hover:border-yellow-500/20'
                       }`}
                     >
-                      <div className="flex items-center justify-center space-x-2">
-                        <TestTube className="w-4 h-4" />
-                        <span className="font-medium">SANDBOX TESTING MODE</span>
-                        {currentMode === 'sandbox' && <Check className="w-4 h-4" />}
-                      </div>
-                      <p className="text-xs text-center mt-1">Account: sb-7ommm28924697@business.example.com</p>
-                      <p className="text-xs text-center">Plan ID: {currentPlanId?.substring(0, 25)}...</p>
-                      {currentMode === 'sandbox' && (
-                        <p className="text-xs text-center text-blue-400 mt-1">
-                          Note: Plans may need to be created in your sandbox account first
-                        </p>
-                      )}
+                      <p className="font-medium text-sm">
+                        🧪 SANDBOX TESTING MODE
+                      </p>
+                      <p className="text-xs mt-1">Account: sb-7ommm28924697@business.example.com</p>
+                      <p className="text-xs">Plan ID: {currentPlanId}</p>
+                      {currentMode === 'sandbox' && <p className="text-xs mt-1">✅ Currently Selected</p>}
                     </div>
                   </div>
                 </div>
