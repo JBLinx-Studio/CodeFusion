@@ -468,7 +468,7 @@ body {
 
   /* Enhanced tab system */
   .tab {
-    @apply px-8 py-4 text-sm font-bold transition-all duration-300 border-b-3 focus:outline-none rounded-t-xl;
+    @apply px-8 py-4 text-sm font-bold transition-all duration-300 border-b-4 focus:outline-none rounded-t-xl;
     background: linear-gradient(135deg, 
       rgba(30, 41, 59, 0.6) 0%, 
       rgba(51, 65, 85, 0.4) 100%);
