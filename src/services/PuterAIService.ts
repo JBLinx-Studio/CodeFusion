@@ -8,62 +8,98 @@ class PuterAIService {
     if (this.isInitialized) return;
     
     try {
-      // Dynamically import Puter to avoid build issues
+      // Import Puter SDK for browser
       const puterModule = await import('puter');
       this.puter = puterModule.default || puterModule;
       
-      // Initialize Puter
-      await this.puter.init();
-      this.isInitialized = true;
-      console.log('Puter initialized successfully');
+      console.log('Puter module loaded:', this.puter);
       
-      // Auto sign-in
-      await this.autoSignIn();
+      // Initialize Puter SDK
+      if (this.puter && typeof this.puter.init === 'function') {
+        await this.puter.init();
+        this.isInitialized = true;
+        console.log('Puter initialized successfully');
+        
+        // Auto sign-in after initialization
+        await this.autoSignIn();
+      } else {
+        throw new Error('Puter SDK not properly loaded');
+      }
     } catch (error) {
       console.error('Failed to initialize Puter:', error);
-      throw error;
+      // Don't throw the error, just log it to prevent blocking the app
+      this.isInitialized = false;
     }
   }
 
   private async autoSignIn() {
-    if (!this.puter) return;
+    if (!this.puter || !this.isInitialized) return;
     
     try {
-      // Check if already signed in
-      const user = await this.puter.auth.getUser();
-      if (user) {
-        this.isSignedIn = true;
-        console.log('Already signed in to Puter:', user.username);
+      // Check if Puter auth is available
+      if (!this.puter.auth) {
+        console.log('Puter auth not available, skipping sign-in');
         return;
       }
 
-      // Attempt to sign in
-      await this.puter.auth.signIn();
-      this.isSignedIn = true;
-      console.log('Successfully signed in to Puter');
-    } catch (error) {
-      console.error('Auto sign-in failed:', error);
-      // Try anonymous access if sign-in fails
+      // Try to get current user first
       try {
-        await this.puter.auth.signInAnonymously();
-        this.isSignedIn = true;
-        console.log('Signed in anonymously to Puter');
-      } catch (anonError) {
-        console.error('Anonymous sign-in also failed:', anonError);
+        const user = await this.puter.auth.getUser();
+        if (user) {
+          this.isSignedIn = true;
+          console.log('Already signed in to Puter:', user.username);
+          return;
+        }
+      } catch (getUserError) {
+        console.log('No existing user session');
       }
+
+      // Try automatic sign-in
+      try {
+        await this.puter.auth.signIn();
+        this.isSignedIn = true;
+        console.log('Successfully signed in to Puter');
+      } catch (signInError) {
+        console.log('Regular sign-in failed, trying anonymous access');
+        
+        // Fallback to anonymous if regular sign-in fails
+        try {
+          await this.puter.auth.signInAnonymously();
+          this.isSignedIn = true;
+          console.log('Signed in anonymously to Puter');
+        } catch (anonError) {
+          console.error('All sign-in methods failed:', anonError);
+        }
+      }
+    } catch (error) {
+      console.error('Auto sign-in process failed:', error);
     }
   }
 
   async chat(prompt: string): Promise<string> {
+    // Always try to initialize if not already done
     if (!this.isInitialized) {
       await this.initialize();
     }
 
-    if (!this.isSignedIn || !this.puter) {
-      throw new Error('Not signed in to Puter');
+    if (!this.isInitialized || !this.puter) {
+      throw new Error('Puter SDK is not available. Please check your internet connection.');
+    }
+
+    if (!this.isSignedIn) {
+      // Try to sign in again
+      await this.autoSignIn();
+      if (!this.isSignedIn) {
+        throw new Error('Unable to connect to Puter AI service. Please try again later.');
+      }
     }
 
     try {
+      // Check if AI functionality is available
+      if (!this.puter.ai || typeof this.puter.ai.chat !== 'function') {
+        throw new Error('Puter AI functionality is not available');
+      }
+
       // Use Puter's AI chat functionality
       const response = await this.puter.ai.chat([
         {
@@ -76,10 +112,10 @@ class PuterAIService {
         }
       ]);
 
-      return response.message?.content || 'Sorry, I could not generate a response.';
+      return response.message?.content || response.content || 'Sorry, I could not generate a response.';
     } catch (error) {
       console.error('Puter AI chat error:', error);
-      throw new Error('Failed to get AI response');
+      throw new Error('Failed to get AI response from Puter service');
     }
   }
 
@@ -90,6 +126,13 @@ class PuterAIService {
 
   isReady(): boolean {
     return this.isInitialized && this.isSignedIn;
+  }
+
+  getStatus(): { initialized: boolean; signedIn: boolean; error?: string } {
+    return {
+      initialized: this.isInitialized,
+      signedIn: this.isSignedIn
+    };
   }
 }
 

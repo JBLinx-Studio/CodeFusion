@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Code, SendHorizontal, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [puterReady, setPuterReady] = useState(false);
-  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'failed' | 'disconnected'>('disconnected');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,31 +37,46 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   }, [messages]);
 
   useEffect(() => {
-    // Initialize Puter when component becomes visible, but don't block the app
+    // Initialize Puter when component becomes visible
     const initializePuter = async () => {
-      if (!visible || puterReady) return;
+      if (!visible || connectionStatus === 'connected') return;
+      
+      setConnectionStatus('connecting');
       
       try {
-        setInitializationError(null);
         await puterAI.initialize();
-        setPuterReady(true);
-        toast.success("AI Assistant ready", {
-          description: "Connected to Puter.js AI successfully"
-        });
+        const status = puterAI.getStatus();
+        
+        if (status.initialized && status.signedIn) {
+          setConnectionStatus('connected');
+          toast.success("AI Assistant ready", {
+            description: "Connected to Puter.js AI successfully"
+          });
+        } else if (status.initialized) {
+          setConnectionStatus('connected');
+          toast.info("AI Assistant ready", {
+            description: "Connected to Puter.js (limited functionality)"
+          });
+        } else {
+          setConnectionStatus('failed');
+          toast.error("AI Assistant unavailable", {
+            description: "Failed to connect to Puter.js AI service"
+          });
+        }
       } catch (error) {
         console.error('Failed to initialize Puter AI:', error);
-        setInitializationError('Failed to connect to AI service');
+        setConnectionStatus('failed');
         toast.error("AI Assistant unavailable", {
-          description: "Failed to connect to Puter.js AI. You can still use the interface."
+          description: "Failed to connect to Puter.js AI service"
         });
       }
     };
 
-    // Use setTimeout to ensure this doesn't block the main thread
     if (visible) {
-      setTimeout(initializePuter, 100);
+      // Small delay to ensure smooth UI transition
+      setTimeout(initializePuter, 200);
     }
-  }, [visible, puterReady]);
+  }, [visible, connectionStatus]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,13 +116,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
       const errorMessage: Message = {
         id: messages.length + 1,
         type: 'ai',
-        content: "Sorry, I'm having trouble connecting to the AI service right now. Please try again in a moment.",
+        content: "Sorry, I'm having trouble connecting to the AI service right now. The Puter.js AI service might be temporarily unavailable. Please try again in a moment.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
       
       toast.error("AI Error", {
-        description: "Failed to get AI response"
+        description: "Failed to get AI response from Puter service"
       });
     } finally {
       setIsLoading(false);
@@ -134,6 +149,32 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     return formattedContent.replace(/`([^`]+)`/g, '<code class="bg-[#242a38] text-[#e4e5e7] px-1 rounded text-xs">$1</code>');
   };
 
+  const getStatusText = () => {
+    switch (connectionStatus) {
+      case 'connecting':
+        return 'Connecting...';
+      case 'connected':
+        return 'Powered by Puter.js';
+      case 'failed':
+        return 'Connection failed';
+      default:
+        return 'Disconnected';
+    }
+  };
+
+  const getPlaceholderText = () => {
+    switch (connectionStatus) {
+      case 'connecting':
+        return 'Connecting to AI...';
+      case 'connected':
+        return 'Ask for code help...';
+      case 'failed':
+        return 'AI service unavailable...';
+      default:
+        return 'Starting AI service...';
+    }
+  };
+
   if (!visible) return null;
 
   return (
@@ -142,19 +183,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
         <div className="flex items-center gap-2">
           <div className="relative">
             <Code size={20} className="text-[#6366f1]" />
-            {puterReady && (
+            {connectionStatus === 'connected' && (
               <Zap size={10} className="absolute -top-1 -right-1 text-green-400" />
             )}
           </div>
           <div>
             <h3 className="font-medium text-sm">AI Assistant</h3>
-            <p className="text-xs text-[#9ca3af]">
-              {initializationError 
-                ? "Connection failed" 
-                : puterReady 
-                  ? "Powered by Puter.js" 
-                  : "Connecting..."}
-            </p>
+            <p className="text-xs text-[#9ca3af]">{getStatusText()}</p>
           </div>
         </div>
         <Button 
@@ -218,20 +253,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder={
-            initializationError 
-              ? "AI service unavailable..." 
-              : puterReady 
-                ? "Ask for code help..." 
-                : "Connecting to AI..."
-          }
-          disabled={!puterReady || isLoading || !!initializationError}
+          placeholder={getPlaceholderText()}
+          disabled={connectionStatus !== 'connected' || isLoading}
           className="flex-1 bg-[#242a38] border border-[#374151] rounded p-2 text-[#e4e5e7] text-sm focus:outline-none focus:border-[#6366f1] disabled:opacity-50"
         />
         <Button 
           type="submit"
           className="bg-[#6366f1] text-white hover:bg-[#4f46e5] h-9 w-9 p-0"
-          disabled={isLoading || !prompt.trim() || !puterReady || !!initializationError}
+          disabled={isLoading || !prompt.trim() || connectionStatus !== 'connected'}
         >
           <SendHorizontal size={16} />
         </Button>
