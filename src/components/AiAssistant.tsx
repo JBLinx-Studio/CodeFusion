@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Code, SendHorizontal, Zap, AlertCircle, LogIn, User, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -89,12 +88,40 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
           description: "You can now use Puter AI features"
         });
       } else {
-        setConnectionStatus('needs-signin');
+        const status = puterAI.getStatus();
+        if (status.canSignIn) {
+          setConnectionStatus('needs-signin');
+        } else {
+          setConnectionStatus('fallback');
+        }
       }
     };
 
     puterAI.onSignInStatusChange(handleSignInChange);
-  }, [visible]);
+
+    // Periodically check status to detect external sign-ins
+    const statusChecker = setInterval(async () => {
+      await puterAI.refreshStatus();
+      const status = puterAI.getStatus();
+      
+      if (status.usingFallback) {
+        setConnectionStatus('fallback');
+      } else if (status.initialized && status.signedIn) {
+        if (connectionStatus !== 'connected') {
+          setConnectionStatus('connected');
+          toast.success("Connected to Puter AI!");
+        }
+      } else if (status.canSignIn) {
+        if (connectionStatus !== 'needs-signin') {
+          setConnectionStatus('needs-signin');
+        }
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(statusChecker);
+    };
+  }, [visible, connectionStatus]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -105,55 +132,26 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
     try {
       console.log('Opening Puter sign-in popup...');
       
-      // Open the Puter sign-in popup directly
-      const signInUrl = 'https://puter.com/action/sign-in?embedded_in_popup=true&msg_id=1';
-      const popup = window.open(
-        signInUrl, 
-        'puter-signin', 
-        'width=500,height=600,scrollbars=yes,resizable=yes,location=yes,status=yes'
-      );
+      const success = await puterAI.signInWithPopup();
       
-      if (!popup) {
-        toast.error("Popup blocked", {
-          description: "Please allow popups for this site and try again"
+      if (success) {
+        setConnectionStatus('connected');
+        toast.success("Successfully signed in to Puter!");
+      } else {
+        toast.info("Sign-in window closed", {
+          description: "Please try signing in again if needed"
         });
-        return;
       }
-
-      // Wait for popup to close
-      const checkClosed = setInterval(async () => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          console.log('Popup closed, checking sign-in status...');
-          
-          // Small delay to allow any post-message events to process
-          setTimeout(async () => {
-            const status = puterAI.getStatus();
-            console.log('Status after popup closed:', status);
-            
-            if (status.signedIn) {
-              setConnectionStatus('connected');
-              toast.success("Successfully signed in to Puter!");
-            } else {
-              toast.info("Sign-in window closed", {
-                description: "Please try signing in again if needed"
-              });
-            }
-          }, 1000);
-        }
-      }, 1000);
-      
-      // Timeout after 5 minutes
-      setTimeout(() => {
-        clearInterval(checkClosed);
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-      }, 300000);
       
     } catch (error) {
       console.error('Sign-in error:', error);
-      toast.error("Failed to open sign-in window");
+      if (error.message === 'Popup blocked') {
+        toast.error("Popup blocked", {
+          description: "Please allow popups for this site and try again"
+        });
+      } else {
+        toast.error("Failed to open sign-in window");
+      }
     } finally {
       setIsSigningIn(false);
     }
@@ -324,27 +322,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
                 </p>
               )}
             </div>
-            {connectionStatus === 'needs-signin' && (
-              <Button
-                onClick={handleSignIn}
-                disabled={isSigningIn}
-                className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full"
-              >
-                <LogIn size={16} className="mr-2" />
-                {isSigningIn ? 'Opening sign-in...' : 'Sign in to Puter'}
-              </Button>
-            )}
-            {connectionStatus === 'fallback' && (
-              <Button
-                onClick={handleSignIn}
-                disabled={isSigningIn}
-                variant="outline"
-                className="border-[#4b5563] text-[#e4e5e7] hover:bg-[#2d3748] w-full"
-              >
-                <LogIn size={16} className="mr-2" />
-                {isSigningIn ? 'Opening sign-in...' : 'Try Puter Sign-in'}
-              </Button>
-            )}
+            <Button
+              onClick={handleSignIn}
+              disabled={isSigningIn}
+              className="bg-[#6366f1] hover:bg-[#4f46e5] text-white w-full"
+            >
+              <LogIn size={16} className="mr-2" />
+              {isSigningIn ? 'Opening sign-in...' : 'Sign in to Puter'}
+            </Button>
           </div>
         </div>
       )}
