@@ -264,11 +264,7 @@ body {
   
   /* Premium panel system */
   .panel {
-    @apply rounded-2xl shadow-2xl backdrop-blur-lg;
-    background: linear-gradient(135deg, 
-      rgba(30, 41, 59, 0.98) 0%, 
-      rgba(51, 65, 85, 0.95) 100%);
-    border: 1px solid rgba(71, 85, 105, 0.4);
+    @apply bg-gradient-to-br from-[#1e293b]/98 to-[#334155]/95 border border-[#475569]/40 rounded-2xl shadow-2xl backdrop-blur-lg;
     box-shadow: 
       0 20px 40px rgba(0, 0, 0, 0.4),
       0 8px 16px rgba(0, 0, 0, 0.3),
@@ -285,14 +281,12 @@ body {
   
   /* Advanced button system */
   .button-gradient {
-    @apply text-white shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105;
-    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
+    @apply bg-gradient-to-r from-[#8b5cf6] via-[#3b82f6] to-[#10b981] hover:from-[#7c3aed] hover:via-[#2563eb] hover:to-[#059669] text-white shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105;
     background-size: 200% 200%;
     animation: gradientShift 6s ease infinite;
   }
   
   .button-gradient:hover {
-    background: linear-gradient(to right, #7c3aed, #2563eb, #059669);
     background-size: 150% 150%;
     box-shadow: 
       0 20px 40px rgba(139, 92, 246, 0.4),
@@ -303,11 +297,10 @@ body {
   
   /* Enhanced typography */
   .section-header {
-    @apply text-slate-50 font-bold text-base px-8 py-4 border-b backdrop-blur-lg;
+    @apply bg-gradient-to-r from-[#1e293b]/98 to-[#334155]/95 text-[#f8fafc] font-bold text-base px-8 py-4 border-b border-[#475569]/40 backdrop-blur-lg;
     background: linear-gradient(135deg, 
       rgba(30, 41, 59, 0.98) 0%, 
       rgba(51, 65, 85, 0.95) 100%);
-    border-color: rgba(71, 85, 105, 0.4);
     box-shadow: 
       0 4px 8px rgba(0, 0, 0, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -315,11 +308,7 @@ body {
   
   /* Premium card system */
   .card {
-    @apply rounded-2xl overflow-hidden shadow-2xl backdrop-blur-lg;
-    background: linear-gradient(135deg, 
-      rgba(30, 41, 59, 0.98) 0%, 
-      rgba(51, 65, 85, 0.95) 100%);
-    border: 1px solid rgba(71, 85, 105, 0.4);
+    @apply rounded-2xl overflow-hidden bg-gradient-to-br from-[#1e293b]/98 to-[#334155]/95 border border-[#475569]/40 shadow-2xl backdrop-blur-lg;
     box-shadow: 
       0 16px 32px rgba(0, 0, 0, 0.4),
       0 4px 8px rgba(0, 0, 0, 0.3),
@@ -339,17 +328,13 @@ body {
   
   /* Enhanced input system */
   .input-field {
-    @apply rounded-xl px-6 py-4 outline-none focus:ring-3 transition-all duration-300 backdrop-blur-lg;
-    background: rgba(30, 41, 59, 0.95);
-    border: 1px solid rgba(71, 85, 105, 0.6);
-    color: #f8fafc;
+    @apply bg-[#1e293b]/95 border border-[#475569]/60 focus:border-[#8b5cf6]/80 text-[#f8fafc] rounded-xl px-6 py-4 outline-none focus:ring-3 focus:ring-[#8b5cf6]/40 transition-all duration-400 backdrop-blur-lg;
     box-shadow: 
       0 4px 8px rgba(0, 0, 0, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
   
   .input-field:focus {
-    border-color: rgba(139, 92, 246, 0.8);
     background: linear-gradient(135deg, 
       rgba(30, 41, 59, 0.98) 0%, 
       rgba(51, 65, 85, 0.9) 100%);
@@ -361,21 +346,19 @@ body {
   
   /* Advanced action buttons */
   .action-button {
-    @apply transition-all duration-300 rounded-xl font-bold text-sm flex items-center gap-3 px-8 py-4 transform hover:-translate-y-2 hover:scale-105;
+    @apply transition-all duration-400 rounded-xl font-bold text-sm flex items-center gap-3 px-8 py-4 transform hover:-translate-y-2 hover:scale-105;
     box-shadow: 
       0 8px 16px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
   
   .primary-button {
-    @apply action-button text-white shadow-xl;
-    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
+    @apply action-button bg-gradient-to-r from-[#8b5cf6] via-[#3b82f6] to-[#10b981] hover:from-[#7c3aed] hover:via-[#2563eb] hover:to-[#059669] text-white shadow-xl;
     background-size: 200% 200%;
     animation: gradientShift 8s ease infinite;
   }
   
   .primary-button:hover {
-    background: linear-gradient(to right, #7c3aed, #2563eb, #059669);
     box-shadow: 
       0 20px 40px rgba(139, 92, 246, 0.4),
       0 10px 20px rgba(59, 130, 246, 0.3),
@@ -384,18 +367,10 @@ body {
   }
   
   .secondary-button {
-    @apply action-button text-slate-50 border shadow-lg;
-    background: linear-gradient(135deg, 
-      rgba(55, 65, 81, 0.95) 0%, 
-      rgba(75, 85, 99, 0.95) 100%);
-    border-color: rgba(107, 114, 128, 0.4);
+    @apply action-button bg-gradient-to-r from-[#374151]/95 to-[#4b5563]/95 hover:from-[#4b5563]/95 hover:to-[#6b7280]/95 text-[#f8fafc] border border-[#6b7280]/40 hover:border-[#8b5cf6]/60 shadow-lg;
   }
   
   .secondary-button:hover {
-    background: linear-gradient(135deg, 
-      rgba(75, 85, 99, 0.95) 0%, 
-      rgba(107, 114, 128, 0.95) 100%);
-    border-color: rgba(139, 92, 246, 0.6);
     box-shadow: 
       0 16px 32px rgba(0, 0, 0, 0.4),
       0 0 30px rgba(139, 92, 246, 0.2);
@@ -403,9 +378,7 @@ body {
   
   /* Enhanced tooltips */
   .custom-tooltip {
-    @apply text-slate-50 shadow-2xl px-6 py-3 text-sm rounded-xl backdrop-blur-xl;
-    background: rgba(30, 41, 59, 0.98);
-    border: 1px solid rgba(71, 85, 105, 0.6);
+    @apply bg-[#1e293b]/98 backdrop-blur-xl border border-[#475569]/60 text-[#f8fafc] shadow-2xl px-6 py-3 text-sm rounded-xl;
     box-shadow: 
       0 16px 32px rgba(0, 0, 0, 0.4),
       0 4px 8px rgba(0, 0, 0, 0.3),
@@ -414,9 +387,7 @@ body {
   
   /* Enhanced keyboard shortcuts */
   .kbd {
-    @apply text-slate-300 text-xs rounded-lg px-3 py-2 font-mono shadow-lg;
-    background: linear-gradient(to bottom, #1e293b, #334155);
-    border: 1px solid #475569;
+    @apply bg-gradient-to-b from-[#1e293b] to-[#334155] border border-[#475569] text-[#e2e8f0] text-xs rounded-lg px-3 py-2 font-mono shadow-lg;
     box-shadow: 
       0 4px 8px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -425,16 +396,11 @@ body {
 
   /* Advanced utility classes */
   .hover-glow {
-    @apply transition-all duration-300;
-  }
-
-  .hover-glow:hover {
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+    @apply transition-all duration-400 hover:shadow-[0_0_40px_rgba(139,92,246,0.5)];
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#8b5cf6] via-[#3b82f6] to-[#10b981];
     background-size: 200% 200%;
     animation: gradientShift 6s ease infinite;
   }
@@ -445,8 +411,7 @@ body {
 
   .animated-border::after {
     content: '';
-    @apply absolute bottom-0 left-0 w-0 h-1 transition-all duration-700;
-    background: linear-gradient(to right, #8b5cf6, #3b82f6, #10b981);
+    @apply absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-[#8b5cf6] via-[#3b82f6] to-[#10b981] transition-all duration-700;
   }
 
   .animated-border:hover::after {
@@ -460,41 +425,36 @@ body {
   }
 
   .status-dot.online {
-    @apply bg-gradient-to-br from-emerald-500 to-emerald-600;
+    @apply bg-gradient-to-br from-[#10b981] to-[#059669];
     animation: pulseGreen 2s ease-in-out infinite;
   }
 
   .status-dot.offline {
-    @apply bg-gradient-to-br from-red-500 to-red-600;
+    @apply bg-gradient-to-br from-[#ef4444] to-[#dc2626];
   }
 
   .status-dot.away {
-    @apply bg-gradient-to-br from-amber-500 to-amber-600;
+    @apply bg-gradient-to-br from-[#f59e0b] to-[#d97706];
     animation: pulseAmber 2s ease-in-out infinite;
   }
 
   /* Enhanced tab system */
   .tab {
-    @apply px-8 py-4 text-sm font-bold transition-all duration-300 border-b-4 focus:outline-none rounded-t-xl;
+    @apply px-8 py-4 text-sm font-bold transition-all duration-400 border-b-3 focus:outline-none rounded-t-xl;
     background: linear-gradient(135deg, 
       rgba(30, 41, 59, 0.6) 0%, 
       rgba(51, 65, 85, 0.4) 100%);
   }
   
   .tab.active {
-    @apply border-purple-500 text-purple-400;
-    background: linear-gradient(to bottom, rgba(139, 92, 246, 0.2), transparent);
+    @apply border-[#8b5cf6] text-[#8b5cf6] bg-gradient-to-b from-[#8b5cf6]/20 to-transparent;
     box-shadow: 
       0 8px 16px rgba(139, 92, 246, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
   
   .tab:not(.active) {
-    @apply border-transparent text-slate-300 hover:text-white hover:border-slate-300/60;
-  }
-
-  .tab:not(.active):hover {
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+    @apply border-transparent text-[#e2e8f0] hover:text-white hover:border-[#e2e8f0]/60 hover:bg-gradient-to-b hover:from-white/10 hover:to-transparent;
   }
 }
 
