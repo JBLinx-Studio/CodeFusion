@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Code, SendHorizontal, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +29,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [puterReady, setPuterReady] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,9 +37,12 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
   }, [messages]);
 
   useEffect(() => {
-    // Initialize Puter when component mounts
+    // Initialize Puter when component becomes visible, but don't block the app
     const initializePuter = async () => {
+      if (!visible || puterReady) return;
+      
       try {
+        setInitializationError(null);
         await puterAI.initialize();
         setPuterReady(true);
         toast.success("AI Assistant ready", {
@@ -47,14 +50,16 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
         });
       } catch (error) {
         console.error('Failed to initialize Puter AI:', error);
+        setInitializationError('Failed to connect to AI service');
         toast.error("AI Assistant unavailable", {
-          description: "Failed to connect to Puter.js AI"
+          description: "Failed to connect to Puter.js AI. You can still use the interface."
         });
       }
     };
 
-    if (visible && !puterReady) {
-      initializePuter();
+    // Use setTimeout to ensure this doesn't block the main thread
+    if (visible) {
+      setTimeout(initializePuter, 100);
     }
   }, [visible, puterReady]);
 
@@ -144,7 +149,11 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
           <div>
             <h3 className="font-medium text-sm">AI Assistant</h3>
             <p className="text-xs text-[#9ca3af]">
-              {puterReady ? "Powered by Puter.js" : "Connecting..."}
+              {initializationError 
+                ? "Connection failed" 
+                : puterReady 
+                  ? "Powered by Puter.js" 
+                  : "Connecting..."}
             </p>
           </div>
         </div>
@@ -209,14 +218,20 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ visible, onClose, onIn
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder={puterReady ? "Ask for code help..." : "Connecting to AI..."}
-          disabled={!puterReady || isLoading}
+          placeholder={
+            initializationError 
+              ? "AI service unavailable..." 
+              : puterReady 
+                ? "Ask for code help..." 
+                : "Connecting to AI..."
+          }
+          disabled={!puterReady || isLoading || !!initializationError}
           className="flex-1 bg-[#242a38] border border-[#374151] rounded p-2 text-[#e4e5e7] text-sm focus:outline-none focus:border-[#6366f1] disabled:opacity-50"
         />
         <Button 
           type="submit"
           className="bg-[#6366f1] text-white hover:bg-[#4f46e5] h-9 w-9 p-0"
-          disabled={isLoading || !prompt.trim() || !puterReady}
+          disabled={isLoading || !prompt.trim() || !puterReady || !!initializationError}
         >
           <SendHorizontal size={16} />
         </Button>

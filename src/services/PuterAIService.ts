@@ -1,16 +1,19 @@
 
-import * as puter from 'puter';
-
 class PuterAIService {
   private isInitialized = false;
   private isSignedIn = false;
+  private puter: any = null;
 
   async initialize() {
     if (this.isInitialized) return;
     
     try {
+      // Dynamically import Puter to avoid build issues
+      const puterModule = await import('puter');
+      this.puter = puterModule.default || puterModule;
+      
       // Initialize Puter
-      await puter.init();
+      await this.puter.init();
       this.isInitialized = true;
       console.log('Puter initialized successfully');
       
@@ -23,9 +26,11 @@ class PuterAIService {
   }
 
   private async autoSignIn() {
+    if (!this.puter) return;
+    
     try {
       // Check if already signed in
-      const user = await puter.auth.getUser();
+      const user = await this.puter.auth.getUser();
       if (user) {
         this.isSignedIn = true;
         console.log('Already signed in to Puter:', user.username);
@@ -33,14 +38,14 @@ class PuterAIService {
       }
 
       // Attempt to sign in
-      await puter.auth.signIn();
+      await this.puter.auth.signIn();
       this.isSignedIn = true;
       console.log('Successfully signed in to Puter');
     } catch (error) {
       console.error('Auto sign-in failed:', error);
       // Try anonymous access if sign-in fails
       try {
-        await puter.auth.signInAnonymously();
+        await this.puter.auth.signInAnonymously();
         this.isSignedIn = true;
         console.log('Signed in anonymously to Puter');
       } catch (anonError) {
@@ -54,13 +59,13 @@ class PuterAIService {
       await this.initialize();
     }
 
-    if (!this.isSignedIn) {
+    if (!this.isSignedIn || !this.puter) {
       throw new Error('Not signed in to Puter');
     }
 
     try {
       // Use Puter's AI chat functionality
-      const response = await puter.ai.chat([
+      const response = await this.puter.ai.chat([
         {
           role: 'system',
           content: 'You are a helpful coding assistant for CodeFusion, a web development environment. Help users with HTML, CSS, JavaScript, React, and general web development questions. Provide practical, actionable advice and code examples when appropriate.'
