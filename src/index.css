@@ -34,13 +34,13 @@ html, body, #root {
 }
 
 body {
-  background: linear-gradient(111deg, #171931 15%, #1e2552 85%);
+  background: linear-gradient(115deg, #191a37 18%, #283289 90%);
   color: var(--text-primary);
-  /* Add subtle grain overlay for more depth */
+  /* Grain and color overlays for extra dimension */
   background-image: 
     url('data:image/svg+xml;utf8,<svg width="100" height="100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="rgba(30,34,70,0.03)"/><circle cx="50" cy="50" r="1.5" fill="rgba(99,102,241,0.08)"/></svg>'),
-    radial-gradient(circle at 25% 15%, rgba(124, 77, 255, 0.10) 0%, transparent 27%),
-    radial-gradient(circle at 75% 85%, rgba(99, 102, 241, 0.10) 0%, transparent 35%);
+    radial-gradient(circle at 30% 12%, rgba(124, 77, 255, 0.18) 0%, transparent 37%),
+    radial-gradient(circle at 77% 90%, rgba(99, 102, 241, 0.13) 0%, transparent 40%);
   background-attachment: fixed;
   background-size: cover, auto, auto;
 }
@@ -52,13 +52,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(120deg, #353a54 60%, #6366f1 100%);
-  border-radius: 10px;
-  border: 2px solid transparent;
+  background: linear-gradient(110deg, #6b59fa 45%, #a5b4fc 130%);
+  border-radius: 16px;
+  border: 2.5px solid #232a44;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(120deg, #6366f1 0%, #a5b4fc 100%);
+  background: linear-gradient(110deg, #93a3fa 20%, #6366f1 130%);
 }
 
 /* Ensure resizable panels take up full height */
@@ -329,10 +329,10 @@ body {
 
 /* Panel/Editor/Preview Panel enhanced backgrounds */
 .editor-container, .editors-panel, .preview-panel {
-  background: linear-gradient(145deg, #101324 0%, #192337 100%) !important;
-  box-shadow: 0 2px 19px 0 rgba(60,64,115,0.10) !important;
-  border-radius: 1.1rem;
-  border: 1.5px solid #292eb1;
+  background: linear-gradient(150deg, #0f1121 0%, #232a46 100%) !important;
+  border-radius: 1.3rem;
+  border: 2.5px solid #6366f1;
+  box-shadow: 0 3px 30px rgba(99,102,241,0.10) !important;
 }
 
 .editor-wrapper, .editor-header, .preview-header {
@@ -376,7 +376,15 @@ input:focus, textarea:focus, select:focus {
   }
   
   .section-header {
-    @apply bg-gradient-to-r from-[#151922] to-[#1a1f2c] text-[#e4e5e7] font-medium text-sm px-4 py-2 border-b border-[#2d3748]/70;
+    background: linear-gradient(90deg, #222255 55%, #151922 100%);
+    color: #a5b4fc !important;
+    border-bottom: 2.5px solid #815cff !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.10em;
+    padding: 0.5em 0.75em;
+    margin-bottom: 1.4em;
+    border-radius: 0.6em 0.6em 0 0;
+    box-shadow: 0 3px 16px 0 #6b59fa22;
   }
   
   .card {
@@ -488,26 +496,23 @@ input:focus, textarea:focus, select:focus {
 
   /* New glass card style */
   .glass-card {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-lg shadow-lg;
-    position: relative;
+    background: rgba(41, 44, 80, 0.74);
+    border: 2px solid #6366f123;
     overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 32px rgba(124,77,255,0.13), 0 2px 8px rgba(0,0,0,0.11);
   }
   
   .glass-card::before {
     content: "";
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.1),
-      transparent
-    );
+    left: -130%; width: 140%; height: 100%;
+    background: linear-gradient(100deg,transparent,rgba(182,146,240,0.09),transparent 90%);
     transition: 0.5s;
     pointer-events: none;
+    z-index: 0;
+    animation: shimmer 4s infinite;
   }
   
   .glass-card:hover::before {
@@ -543,4 +548,37 @@ input:focus, textarea:focus, select:focus {
   .btn-info {
     @apply bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white;
   }
+}
+
+/* Focus ring for better accessibility */
+.focus-ring {
+  outline: none !important;
+  box-shadow: 0 0 0 2.5px #6366f1b7;
+  transition: box-shadow 0.18s cubic-bezier(.42,0,.58,1);
+}
+
+/* Animate panel/card entrance for  extra liveliness */
+@keyframes panelFadeIn {
+  from { opacity: 0; transform: translateY(22px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+.enhanced-card, .glass-card, .editor-panel, .preview-panel {
+  animation: panelFadeIn 0.8s cubic-bezier(.29,.7,.32,1.11) 1;
+}
+@keyframes shimmer {
+  0% { left: -130%; }
+  100% { left: 100%; }
+}
+
+/* Stronger shadow/glow for active states */
+.primary-button:focus, .btn-primary:focus {
+  box-shadow: 0 0 0 3px #7c4dff44, 0 0 1.5px #6366f1dd;
+}
+
+/* Animated underline for focused/hover tabs (if present) */
+.tab.active, .tab:focus-visible {
+  border-color: #a5b4fc !important;
+  color: #a5b4fc !important;
+  background: linear-gradient(90deg, #232a44 0, #232a44 100%);
+  box-shadow: 0 2px 8px #a5b4fc22;
 }
