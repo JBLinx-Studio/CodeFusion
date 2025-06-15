@@ -17,6 +17,7 @@ interface LayoutContextProps {
   dockedFiles: string[];
   toggleDockedFile: (fileName: string) => void;
   isFileDocked: (fileName: string) => boolean;
+  setDockedFiles: (files: string[]) => void;
 }
 
 const LayoutContext = createContext<LayoutContextProps | undefined>(undefined);
@@ -28,7 +29,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [dockedFiles, setDockedFiles] = useState<string[]>([]);
+  const [dockedFiles, setDockedFilesState] = useState<string[]>([]);
 
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -61,7 +62,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       if (savedDockedFiles) {
-        setDockedFiles(JSON.parse(savedDockedFiles));
+        setDockedFilesState(JSON.parse(savedDockedFiles));
       }
     } catch (e) {
       console.error("Could not load layout preferences:", e);
@@ -70,7 +71,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Toggle whether a file is docked
   const toggleDockedFile = (fileName: string) => {
-    setDockedFiles(prev => {
+    setDockedFilesState(prev => {
       if (prev.includes(fileName)) {
         return prev.filter(file => file !== fileName);
       } else {
@@ -82,6 +83,11 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Check if a file is docked
   const isFileDocked = (fileName: string) => {
     return dockedFiles.includes(fileName);
+  };
+
+  // Add setDockedFiles to context
+  const setDockedFiles = (files: string[]) => {
+    setDockedFilesState(files);
   };
 
   // Handle resize events
@@ -255,6 +261,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         dockedFiles,
         toggleDockedFile,
         isFileDocked,
+        setDockedFiles,
       }}
     >
       {React.cloneElement(children as React.ReactElement, { ref: setContainerRef })}

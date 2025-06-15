@@ -32,7 +32,8 @@ export const EditorContainer: React.FC = () => {
     setShowAiAssistant,
     dockedFiles,
     toggleDockedFile,
-    isFileDocked
+    isFileDocked,
+    setDockedFiles
   } = useLayout();
   
   const {
@@ -203,6 +204,11 @@ export const EditorContainer: React.FC = () => {
     }
   };
 
+  // Add function to reorder docked files
+  const handleReorderDockedFiles = (newOrder: string[]) => {
+    setDockedFiles(newOrder);
+  };
+
   return (
     <motion.div 
       className="flex flex-1 overflow-hidden rounded-xl shadow-2xl border border-[#2d3748]/30 bg-gradient-to-br from-[#0c1018]/90 to-[#151d2e]/90 backdrop-blur-sm h-full"
@@ -301,6 +307,7 @@ export const EditorContainer: React.FC = () => {
                     handleFileChange={handleFileChange}
                     handleFileSelect={handleFileSelect}
                     CodeEditorComponent={CodeEditor}
+                    onReorderDockedFiles={handleReorderDockedFiles}
                   />
                 </div>
               ) : (

@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff, X, File } from "lucide-react";
+import { Pin, PinOff, X, File, move } from "lucide-react";
+import { useDraggableTabs } from "./useDraggableTabs"; // Import hook
 
 interface TabbedEditorsProps {
   dockedFiles: string[];
@@ -16,6 +17,7 @@ interface TabbedEditorsProps {
   handleFileChange: (content: string) => void;
   handleFileSelect: (fileName: string) => void;
   CodeEditorComponent: any;
+  onReorderDockedFiles?: (nextFiles: string[]) => void; // New, used for reordering
 }
 
 export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
@@ -31,6 +33,7 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
   handleFileChange,
   handleFileSelect,
   CodeEditorComponent,
+  onReorderDockedFiles,
 }) => {
   // Only show docked files as tabs in split view
   const activeIndex = dockedFiles.indexOf(currentFile);
@@ -39,24 +42,55 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
     ? dockedFiles
     : [...dockedFiles, currentFile];
 
+  const {
+    draggedIdx,
+    hoverIdx,
+    listeners,
+  } = useDraggableTabs(dockedFiles, (updatedTabs) => {
+    // Optional: Only call on reorder if prop is given (just for docked files)
+    if (onReorderDockedFiles) {
+      onReorderDockedFiles(updatedTabs);
+    }
+  });
+
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex items-center gap-1 overflow-x-auto border-b border-[#232a44] bg-[#151922]/80 px-2 py-1 rounded-t-lg max-w-full">
-        {allTabs.map((fileName) => {
-          const { color, bgColor } = getTagColorForFile(fileName);
+        {allTabs.map((fileName, idx) => {
+          const { color } = getTagColorForFile(fileName);
           const isActive = fileName === currentFile;
+          const dockedIdx = dockedFiles.indexOf(fileName);
+          // Show drag-n-drop for docked tabs only
+          const isDraggable = dockedIdx !== -1 && Boolean(onReorderDockedFiles);
+
           return (
             <div
               key={fileName}
-              className={`flex items-center rounded-t-md border-b-2 transition-all mr-0.5 select-none min-w-[88px] group
+              draggable={isDraggable}
+              onDragStart={() => isDraggable && listeners.onDragStart(dockedIdx)}
+              onDragEnd={isDraggable ? listeners.onDragEnd : undefined}
+              onDragEnter={isDraggable ? () => listeners.onDragEnter(dockedIdx) : undefined}
+              onDragOver={isDraggable ? listeners.onDragOver : undefined}
+              onDrop={isDraggable ? () => listeners.onDrop(dockedIdx) : undefined}
+              className={`
+                flex items-center rounded-t-md border-b-2 transition-all mr-0.5 select-none min-w-[88px] group cursor-pointer
                 ${isActive
                   ? "bg-[#232a44] border-b-[#6366f1] shadow"
                   : "hover:bg-[#232a44]/70 border-b-transparent"}
-              `}
+                ${dockedIdx === hoverIdx && draggedIdx !== null ? "ring-2 ring-[#6366f1] z-10" : ""}
+                ${isDraggable ? "draggable-tab": ""}
+                `}
               style={{
                 borderColor: isActive ? "#6366f1" : "transparent",
+                opacity: draggedIdx === dockedIdx ? 0.5 : 1,
               }}
             >
+              {isDraggable && (
+                <span className="flex items-center pr-1 opacity-60 cursor-move drag-handle">
+                  {/* Drag handle icon (move) */}
+                  <move size={13} />
+                </span>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
