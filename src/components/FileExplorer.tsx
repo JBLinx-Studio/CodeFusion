@@ -15,6 +15,7 @@ interface FileExplorerProps {
   onRenameFile?: (oldName: string, newName: string) => void;
   dockedFiles?: string[];
   toggleDockedFile?: (fileName: string) => void;
+  onCollapse?: () => void; // New prop for collapsing sidebar
 }
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({
@@ -25,7 +26,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   onDeleteFile,
   onRenameFile,
   dockedFiles = [],
-  toggleDockedFile
+  toggleDockedFile,
+  onCollapse,
 }) => {
   const [newFileName, setNewFileName] = useState("");
   const [newFileType, setNewFileType] = useState("js");
@@ -230,12 +232,26 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   return (
     <motion.div 
-      className="bg-gradient-to-b from-[#131620] to-[#1a1f2c] border-r border-[#374151]/60 h-full flex flex-col shadow-xl"
+      className="bg-gradient-to-b from-[#131620] to-[#1a1f2c] border-r border-[#374151]/60 h-full flex flex-col shadow-xl relative"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="p-4 flex items-center justify-between border-b border-[#374151]/70 bg-[#151922]/80 backdrop-blur-sm">
+      {/* Collapse (chevron) button in the top right of FileExplorer */}
+      {onCollapse && (
+        <button
+          className="absolute top-2 right-2 z-40 p-1 rounded hover:bg-[#232a44]/60 transition-all group"
+          title="Collapse Project Files"
+          aria-label="Collapse Project Files"
+          onClick={onCollapse}
+        >
+          {/* Chevron Left icon */}
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      )}
+      <div className="p-4 flex items-center justify-between border-b border-[#374151]/70 bg-[#151922]/80 backdrop-blur-sm pr-9">
         <h2 className="text-[#e4e5e7] font-medium text-sm flex items-center">
           <Folder className="mr-2 h-4 w-4 text-[#6366f1]" />
           Project Files

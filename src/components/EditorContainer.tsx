@@ -18,6 +18,9 @@ export const EditorContainer: React.FC = () => {
   const [showBackendPanel, setShowBackendPanel] = useState<boolean>(false);
   const [showShortcutsPanel, setShowShortcutsPanel] = useState<boolean>(true);
   
+  // Collapsible File Explorer state
+  const [isFileExplorerCollapsed, setIsFileExplorerCollapsed] = useState(false);
+
   const {
     view,
     setView,
@@ -120,12 +123,12 @@ export const EditorContainer: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isMobile, setView, currentFile, toggleDockedFile, isFileDocked, showAiAssistant, showBackendPanel]);
 
-  // Helper functions for conditional rendering
+  // Helper functions for conditional rendering (updated to support collapse)
   const shouldShowFileExplorer = () => {
     if (isMobile) {
-      return view === 'editor';
+      return view === 'editor' && !isFileExplorerCollapsed;
     }
-    return true;
+    return !isFileExplorerCollapsed;
   };
 
   const insertCodeFromAI = (code: string) => {
@@ -182,15 +185,15 @@ export const EditorContainer: React.FC = () => {
       transition={{ duration: 0.4 }}
       style={{ height: 'calc(100vh - 120px)' }}
     >
-      {/* File Explorer */}
+      {/* File Explorer - Collapsible Sidebar */}
       <AnimatePresence>
         {shouldShowFileExplorer() && (
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.3 }}
-            className="w-64 h-full flex-shrink-0 bg-gradient-to-b from-[#0c101a]/95 to-[#151d2e]/95"
+            className="relative w-64 h-full flex-shrink-0 bg-gradient-to-b from-[#0c101a]/95 to-[#151d2e]/95"
             style={{ display: view === 'preview' && isMobile ? 'none' : undefined }}
           >
             <FileExplorer 
@@ -210,10 +213,28 @@ export const EditorContainer: React.FC = () => {
               }}
               dockedFiles={dockedFiles}
               toggleDockedFile={toggleDockedFile}
+              // Pass collapse handler to allow FileExplorer to trigger collapse
+              onCollapse={() => setIsFileExplorerCollapsed(true)}
             />
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Expand/collapse tab for File Explorer */}
+      {isFileExplorerCollapsed && (
+        <button
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-[#151922]/90 border border-[#374151]/70 rounded-r-lg px-2 py-2 shadow-lg flex items-center hover:bg-[#232a44]/80 transition-all group"
+          aria-label="Show Project Files"
+          style={{ width: '32px', minHeight: '56px' }}
+          onClick={() => setIsFileExplorerCollapsed(false)}
+        >
+          <span className="sr-only">Expand Project Files</span>
+          {/* Chevron Right icon from lucide-react */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      )}
 
       {/* Main content area with resizable panels */}
       <ResizablePanelGroup 
