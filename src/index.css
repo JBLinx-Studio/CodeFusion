@@ -368,7 +368,7 @@ input:focus, textarea:focus, select:focus {
   }
   
   .panel {
-    @apply bg-gradient-to-br from-[#151922]/90 to-[#1e293b]/90 border border-[#2d3748]/50 rounded-lg shadow-lg;
+    @apply bg-gradient-to-br from-[#151922]/90 to-[#1e293b]/90 border border-[#2d3748]/50 rounded-2xl shadow-2xl;
   }
   
   .button-gradient {
@@ -388,7 +388,7 @@ input:focus, textarea:focus, select:focus {
   }
   
   .card {
-    @apply rounded-lg overflow-hidden bg-gradient-to-br from-[#151922]/90 to-[#1e293b]/80 border border-[#374151]/50 shadow-lg;
+    @apply rounded-2xl overflow-hidden bg-gradient-to-br from-[#151922]/90 to-[#1e293b]/80 border border-[#374151]/50 shadow-lg;
   }
   
   /* Enhanced styles for docked files */

@@ -1,3 +1,4 @@
+/* --- STRUCTURAL GLOBAL STYLES --- */
 #root {
   max-width: 100%;
   margin: 0 auto;
@@ -15,12 +16,11 @@ body {
   color: #e4e5e7;
   font-family: 'Inter', 'Poppins', sans-serif;
   overflow-x: hidden;
-  /* Subtle grain overlay */
   background-image: 
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="none"><rect width="100" height="100" fill="rgba(30,34,70,0.03)"/><circle cx="50" cy="50" r="1.5" fill="rgba(99,102,241,0.08)"/></svg>');
 }
 
-/* Remove white flash and blur during transitions - improved selectors */
+/* Editor/iframe/overlay utility styles, not suited for component classes */
 .ReactCodeMirror,
 .cm-content, 
 .cm-gutter, 
@@ -189,15 +189,6 @@ iframe {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* Panel header enhancements */
-/* Button improvements */
-/* Subtle underline for section headers */
-/* Enhanced glassmorphism effect for backgrounds */
-/* Add subtle color shift animation for gradients */
-/* Add better transitions for hover/active interactive elements */
-/* More elegant scrollbars */
-/* Improved animation timing */
-/* Badge styling enhancements */
 /* Toast styling improvements */
 .toast-notification {
   border-radius: 0.5rem;
@@ -235,4 +226,75 @@ iframe {
     -webkit-backdrop-filter: blur(1.5rem);
     border: 2px solid #6366f114;
   }
+}
+
+/* --- TAILWIND COMPONENT CLASSES --- */
+@layer components {
+  /* Panels, Cards, and Glassmorphism */
+  .glassmorphism {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-lg rounded-xl;
+  }
+  .enhanced-card {
+    @apply bg-gradient-to-tr from-[#181b31] via-[#232a5a] to-[#6366f1]/20 border-2 border-[#6366f1] rounded-xl shadow-2xl relative overflow-hidden transition-transform hover:scale-105;
+  }
+  .panel-header,
+  .preview-header,
+  .editor-header {
+    @apply bg-gradient-to-r from-[#171a34] to-[#353993] border-b-2 border-[#6366f1] text-[#a5b4fc] text-lg font-semibold px-6 py-3 rounded-t-xl shadow;
+  }
+  .section-header {
+    @apply border-b-2 border-[#6366f1] pb-2 mb-5 text-lg font-medium bg-gradient-to-r from-[#1c1b38] to-[#232a44] text-[#a5b4fc] tracking-wide;
+  }
+
+  /* Buttons */
+  .primary-button,
+  .btn-primary {
+    @apply bg-gradient-to-r from-[#6b59fa] to-[#4d97fa] text-white font-bold rounded-full px-5 py-2 shadow-md hover:from-[#815cff] hover:to-[#a5b4fc] transition-all hover:scale-105 border-2 border-transparent;
+  }
+  .primary-button:active,
+  .btn-primary:active {
+    @apply scale-95;
+    animation: bounceActive 0.16s linear;
+  }
+  .btn-secondary {
+    @apply bg-gray-800 text-white rounded-md font-medium px-4 py-2 shadow;
+    @apply hover:bg-gray-700 transition;
+  }
+
+  /* Toasts */
+  .toast-notification {
+    @apply rounded-lg shadow-xl border border-white/10 p-3 bg-gradient-to-tr from-[#1e233b] via-[#30206554] to-[#232a44] text-[#e4e5e7];
+  }
+  
+  /* kbd shortcut badges */
+  .kbd {
+    @apply bg-[#1e293b] border border-[#374151] rounded text-[#9ca3af] font-mono text-xs px-1 py-0.5 mx-1;
+  }
+
+  /* Scrollbars for big desktop drag areas */
+  .custom-scrollbar {
+    @apply scrollbar-thin scrollbar-thumb-[#6366f1] scrollbar-track-[#151922];
+  }
+}
+
+/* --- TAILWIND KEYFRAMES --- */
+@keyframes bounceActive {
+  0%   { transform: scale(1.05) translateY(-3px);}
+  50%  { transform: scale(0.97) translateY(2px);}
+  100% { transform: scale(1) translateY(0);}
+}
+
+@keyframes glow-card {
+  0%, 100% {
+    box-shadow: 0 10px 36px 0 rgba(99, 102, 241, 0.19), 0 2px 12px rgba(0,0,0,0.13);
+    border-color: #6366f1;
+  }
+  50% {
+    box-shadow: 0 15px 54px 0 rgba(99,102,241,0.36), 0 5px 18px rgba(60,70,180,.24);
+    border-color: #a5b4fc;
+  }
+}
+@keyframes shimmer {
+  0% { left: -120%; }
+  100% { left: 120%; }
 }
