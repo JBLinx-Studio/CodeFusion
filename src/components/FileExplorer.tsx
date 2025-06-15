@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
-import { Folder, File, Plus, Trash2, Pencil, Check, Pin, PinOff } from "lucide-react";
+import { Folder, File, Plus, Trash2, ChevronDown, ChevronUp, Pencil, Check, Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FileType } from "@/types/file";
@@ -16,7 +15,7 @@ interface FileExplorerProps {
   onRenameFile?: (oldName: string, newName: string) => void;
   dockedFiles?: string[];
   toggleDockedFile?: (fileName: string) => void;
-  onCollapse?: () => void;
+  onCollapse?: () => void; // New prop for collapsing sidebar
 }
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({
@@ -33,7 +32,12 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const [newFileName, setNewFileName] = useState("");
   const [newFileType, setNewFileType] = useState("js");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  const [showHtml, setShowHtml] = useState(true);
+  const [showCss, setShowCss] = useState(true);
+  const [showJs, setShowJs] = useState(true);
+  const [showOther, setShowOther] = useState(true);
+  
+  // For file renaming
   const [isRenaming, setIsRenaming] = useState(false);
   const [fileToRename, setFileToRename] = useState("");
   const [newName, setNewName] = useState("");
@@ -43,14 +47,32 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     return dockedFiles.includes(fileName);
   };
 
+  const handleToggleDockedFile = (fileName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (toggleDockedFile) {
+      toggleDockedFile(fileName);
+      toast.success(
+        isFileDocked(fileName) 
+          ? `Removed ${fileName} from docked files` 
+          : `Added ${fileName} to docked files`
+      );
+    }
+  };
+
   const handleAddFile = () => {
     if (!newFileName) return;
+    
     let finalFileName = newFileName;
     if (!finalFileName.includes('.')) {
-      if (newFileType === 'html') finalFileName += '.html';
-      else if (newFileType === 'css') finalFileName += '.css';
-      else if (newFileType === 'js') finalFileName += '.js';
+      if (newFileType === 'html') {
+        finalFileName += '.html';
+      } else if (newFileType === 'css') {
+        finalFileName += '.css';
+      } else if (newFileType === 'js') {
+        finalFileName += '.js';
+      }
     }
+
     onAddFile(finalFileName, newFileType);
     setNewFileName("");
     setIsDialogOpen(false);
@@ -62,6 +84,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       toast.error("Cannot delete default files");
       return;
     }
+    
     if (confirm(`Are you sure you want to delete ${fileName}?`)) {
       onDeleteFile(fileName);
       toast.success(`Deleted ${fileName}`);
@@ -80,16 +103,20 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   const finishRenaming = () => {
     if (fileToRename && newName && fileToRename !== newName && onRenameFile) {
+      // Check if the file has a valid extension
       const oldExt = fileToRename.split('.').pop();
       const hasExtension = newName.includes('.');
+      
       let finalNewName = newName;
       if (!hasExtension && oldExt) {
         finalNewName = `${newName}.${oldExt}`;
       }
+      
       if (finalNewName === fileToRename) {
         setIsRenaming(false);
         return;
       }
+      
       if (Object.keys(files).includes(finalNewName)) {
         toast.error(`File ${finalNewName} already exists`);
       } else {
@@ -108,192 +135,337 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     }
   };
 
-  // --- Group + color files by type ---
+  // Group files by type
   const htmlFiles = Object.keys(files).filter(name => name.endsWith('.html'));
   const cssFiles = Object.keys(files).filter(name => name.endsWith('.css'));
   const jsFiles = Object.keys(files).filter(name => name.endsWith('.js'));
   const otherFiles = Object.keys(files).filter(name => !name.endsWith('.html') && !name.endsWith('.css') && !name.endsWith('.js'));
 
-  // --- Helper for tag color ---
-  const fileColor = (fileName: string) =>
-    fileName.endsWith('.html') ? "#ef4444"
-    : fileName.endsWith('.css') ? "#3b82f6"
-    : fileName.endsWith('.js') ? "#f59e0b"
-    : "#9ca3af";
-
-  // --- Render a single file row ---
-  const renderFileRow = (fileName: string) => (
-    <div
+  // The file rendering helper function
+  const renderFileItem = (fileName: string) => (
+    <div 
       key={fileName}
-      className={`flex items-center px-2 py-1.5 rounded-md transition-all shadow-sm ${
+      className={`flex items-center justify-between px-3 py-1.5 rounded group ${
         currentFile === fileName 
-          ? 'bg-[#232a44] text-white border-l-4 border-[#6366f1]' 
-          : 'hover:bg-[#232a44]/60 text-[#a1a1aa]'
-      } mb-1`}
+          ? 'bg-[#374151]/70 text-white' 
+          : 'hover:bg-[#252b3b]/50 text-[#9ca3af]'
+      } transition-colors`}
     >
-      {/* Icon + filename */}
-      <div
-        className="flex-1 flex items-center gap-2 cursor-pointer"
-        onClick={() => onSelectFile(fileName)}
-      >
-        <File size={16} className="flex-shrink-0" color={fileColor(fileName)} />
-        {isRenaming && fileToRename === fileName ? (
-          <>
-            <input
-              ref={inputRef}
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onBlur={finishRenaming}
-              onKeyDown={handleKeyDown}
-              className="bg-transparent border-b border-[#6366f1] text-white w-28 px-2 py-0.5 outline-none"
-              autoFocus
-            />
-            <Button variant="ghost" size="sm" onClick={finishRenaming} className="h-6 w-6 p-0">
-              <Check size={14} className="text-green-500" />
-            </Button>
-          </>
-        ) : (
-          <span className="truncate font-medium text-[13px]">{fileName}</span>
-        )}
-        {isFileDocked(fileName) && 
-          <span className="ml-1 text-[#6366f1] text-[11px] font-bold">●</span>
-        }
-      </div>
-      {/* Actions */}
-      <div className="flex items-center gap-1">
-        {toggleDockedFile && (
-          <Button
-            variant="ghost" size="icon"
-            className={`h-6 w-6 p-0 ${isFileDocked(fileName) ? 'text-[#6366f1]' : 'text-[#9ca3af] hover:text-[#6366f1]'}`}
-            onClick={e => { e.stopPropagation(); toggleDockedFile(fileName); }}
-            aria-label={isFileDocked(fileName) ? "Undock file" : "Dock file"}
+      {isRenaming && fileToRename === fileName ? (
+        <div className="flex-1 flex items-center">
+          <File size={14} className="mr-2 flex-shrink-0 text-[#ef4444]" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onBlur={finishRenaming}
+            onKeyDown={handleKeyDown}
+            className="bg-[#1a1f2c] border border-[#6366f1] text-white p-1 text-xs w-full rounded outline-none"
+            autoFocus
+          />
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={finishRenaming}
+            className="ml-1 h-6 w-6 p-0"
           >
-            {isFileDocked(fileName) ? <PinOff size={14}/> : <Pin size={14}/>}
+            <Check size={14} className="text-green-500" />
           </Button>
-        )}
-        <Button
-          variant="ghost" size="icon"
-          className="h-6 w-6 p-0 text-[#9ca3af] hover:text-[#3b82f6]"
-          onClick={() => startRenaming(fileName)} aria-label="Rename file"
-        >
-          <Pencil size={14}/>
-        </Button>
-        <Button
-          variant="ghost" size="icon"
-          className="h-6 w-6 p-0 text-[#ef4444] hover:text-red-600"
-          onClick={() => handleDeleteFile(fileName)} aria-label="Delete file"
-        >
-          <Trash2 size={14}/>
-        </Button>
-      </div>
+        </div>
+      ) : (
+        <>
+          <div 
+            className="flex items-center flex-1 cursor-pointer overflow-hidden"
+            onClick={() => onSelectFile(fileName)}
+          >
+            <File size={14} className={`mr-2 flex-shrink-0 ${
+              fileName.endsWith('.html') ? 'text-[#ef4444]' :
+              fileName.endsWith('.css') ? 'text-[#3b82f6]' :
+              fileName.endsWith('.js') ? 'text-[#f59e0b]' :
+              'text-[#9ca3af]'
+            }`} />
+            <span className="text-xs truncate">
+              {fileName}
+              {isFileDocked(fileName) && (
+                <span className="ml-1 text-[#6366f1]">●</span>
+              )}
+            </span>
+          </div>
+          <div className="flex space-x-1">
+            {toggleDockedFile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 w-6 p-0 ${
+                  isFileDocked(fileName) 
+                    ? 'text-[#6366f1] opacity-100' 
+                    : 'text-[#9ca3af] opacity-0 group-hover:opacity-100'
+                } hover:bg-[#252b3b] hover:text-[#a5b4fc] transition-all`}
+                onClick={(e) => handleToggleDockedFile(fileName, e)}
+                title={isFileDocked(fileName) ? "Undock file (Alt+D)" : "Dock file (Alt+D)"}
+              >
+                {isFileDocked(fileName) ? <PinOff size={14} /> : <Pin size={14} />}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-[#252b3b] hover:text-[#a5b4fc] transition-all"
+              onClick={() => startRenaming(fileName)}
+            >
+              <Pencil size={14} className="text-[#9ca3af]" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-[#252b3b] hover:text-red-400 transition-all"
+              onClick={() => handleDeleteFile(fileName)}
+            >
+              <Trash2 size={14} className="text-[#9ca3af]" />
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 
-  // --- Main Sidebar/Content ---
   return (
-    <Sidebar className="h-full min-w-[220px] max-w-[340px] bg-gradient-to-b from-[#161c2b] to-[#1a1f2c]/90 border-r border-[#374151]/60 glassmorphism">
-      <SidebarHeader className="flex justify-between items-center px-4 py-3 bg-[#151922]/90 border-b border-[#232a44] shadow-md">
-        <span className="inline-flex items-center gap-2 text-[15px] font-bold text-[#a5b4fc] tracking-wide">
-          <Folder size={18} className="text-[#6366f1]" />
+    <motion.div 
+      className="bg-gradient-to-b from-[#131620] to-[#1a1f2c] border-r border-[#374151]/60 h-full flex flex-col shadow-xl relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Collapse (chevron) button in the top right of FileExplorer */}
+      {onCollapse && (
+        <button
+          className="absolute top-2 right-2 z-40 p-1 rounded hover:bg-[#232a44]/60 transition-all group"
+          title="Collapse Project Files"
+          aria-label="Collapse Project Files"
+          onClick={onCollapse}
+        >
+          {/* Chevron Left icon */}
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      )}
+      <div className="p-4 flex items-center justify-between border-b border-[#374151]/70 bg-[#151922]/80 backdrop-blur-sm pr-9">
+        <h2 className="text-[#e4e5e7] font-medium text-sm flex items-center">
+          <Folder className="mr-2 h-4 w-4 text-[#6366f1]" />
           Project Files
-        </span>
+        </h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button aria-label="Add file" variant="ghost" size="icon"
-              className="hover:bg-[#6366f1]/10">
-              <Plus size={18} className="text-[#6366f1]"/>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-[#252b3b] hover:text-[#a5b4fc]">
+              <Plus size={16} className="text-[#9ca3af]" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gradient-to-b from-[#181d2e] to-[#232a44] border border-[#6366f1]/40">
+          <DialogContent className="bg-gradient-to-b from-[#1a1f2c] to-[#252b3b] border border-[#374151]/70 text-[#e4e5e7] shadow-xl">
             <DialogHeader>
               <DialogTitle className="text-[#a5b4fc]">Create New File</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 py-2">
-              <input
-                id="filename"
-                type="text"
-                value={newFileName}
-                onChange={(e) => setNewFileName(e.target.value)}
-                placeholder="e.g., utils.js"
-                className="w-full p-2 bg-[#151922] border border-[#374151]/70 rounded text-[#e4e5e7] focus:ring-2 focus:ring-[#6366f1]/50 focus:border-[#6366f1] outline-none transition-all"
-              />
-              <select
-                id="filetype"
-                value={newFileType}
-                onChange={(e) => setNewFileType(e.target.value)}
-                className="w-full p-2 bg-[#151922] border border-[#374151]/70 rounded text-[#e4e5e7] focus:ring-2 focus:ring-[#6366f1]/50 focus:border-[#6366f1] outline-none transition-all"
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="filename" className="text-sm text-[#9ca3af] font-medium">
+                  File Name
+                </label>
+                <input
+                  id="filename"
+                  type="text"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  placeholder="e.g., utils.js"
+                  className="w-full p-2 bg-[#151922] border border-[#374151]/70 rounded text-[#e4e5e7] focus:ring-2 focus:ring-[#6366f1]/50 focus:border-[#6366f1] outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="filetype" className="text-sm text-[#9ca3af] font-medium">
+                  File Type
+                </label>
+                <select
+                  id="filetype"
+                  value={newFileType}
+                  onChange={(e) => setNewFileType(e.target.value)}
+                  className="w-full p-2 bg-[#151922] border border-[#374151]/70 rounded text-[#e4e5e7] focus:ring-2 focus:ring-[#6366f1]/50 focus:border-[#6366f1] outline-none transition-all"
+                >
+                  <option value="html">HTML</option>
+                  <option value="css">CSS</option>
+                  <option value="js">JavaScript</option>
+                </select>
+              </div>
+              <Button
+                onClick={handleAddFile}
+                className="w-full mt-4 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white hover:from-[#4f46e5] hover:to-[#7c3aed] transition-all shadow-lg"
               >
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-                <option value="js">JavaScript</option>
-              </select>
-              <Button onClick={handleAddFile} className="w-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white mt-4">
-                  Create File
+                Create File
               </Button>
             </div>
           </DialogContent>
         </Dialog>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent className="p-4 overflow-y-auto custom-scrollbar">
-        {/* Docked Files */}
+      <div className="overflow-y-auto flex-1 p-2">
+        {/* Docked Files Section - New! */}
         {dockedFiles && dockedFiles.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 px-1 mb-1 text-[#8b5cf6] text-xs font-semibold uppercase tracking-wide">
-              <Pin size={14} className="text-[#6366f1]" /> Docked Files
+          <motion.div 
+            className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.0 }}
+          >
+            <div 
+              className="flex items-center px-3 py-2 cursor-pointer hover:bg-[#252b3b]/30 transition-colors bg-gradient-to-r from-[#151922]/80 to-transparent border-b border-[#374151]/30"
+            >
+              <Pin size={16} className="mr-2 text-[#6366f1]" />
+              <span className="text-sm font-medium text-[#e4e5e7]">Docked Files</span>
             </div>
-            <div>
-              {dockedFiles.map((f) => renderFileRow(f))}
+            
+            <div className="p-1 space-y-1">
+              {dockedFiles.map(fileName => renderFileItem(fileName))}
             </div>
-            <div className="h-[1.5px] mx-1 my-2 bg-gradient-to-r from-[#4f46e5]/60 via-[#6366f1]/20 to-transparent rounded-full"/>
-          </div>
+          </motion.div>
         )}
 
-        {/* By type (HTML, CSS, JS, Other) */}
-        {htmlFiles.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 px-1 mt-3 mb-1 text-[#ef4444]/90 text-xs font-bold">
-              <Folder size={13} className="text-[#ef4444]" /> HTML
-            </div>
-            {htmlFiles.filter(f => !isFileDocked(f)).map(f => renderFileRow(f))}
-          </>
-        )}
-        {cssFiles.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 px-1 mt-3 mb-1 text-[#3b82f6]/90 text-xs font-bold">
-              <Folder size={13} className="text-[#3b82f6]" /> CSS
-            </div>
-            {cssFiles.filter(f => !isFileDocked(f)).map(f => renderFileRow(f))}
-          </>
-        )}
-        {jsFiles.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 px-1 mt-3 mb-1 text-[#f59e0b]/90 text-xs font-bold">
-              <Folder size={13} className="text-[#f59e0b]" /> JavaScript
-            </div>
-            {jsFiles.filter(f => !isFileDocked(f)).map(f => renderFileRow(f))}
-          </>
-        )}
-        {otherFiles.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 px-1 mt-3 mb-1 text-[#a1a1aa]/80 text-xs font-semibold">
-              <Folder size={13} className="text-[#a1a1aa]" /> Other
-            </div>
-            {otherFiles.filter(f => !isFileDocked(f)).map(f => renderFileRow(f))}
-          </>
-        )}
-      </SidebarContent>
-      {onCollapse && (
-        <SidebarFooter>
-          <button
-            className="w-full px-2 py-1 text-xs text-[#6366f1] rounded hover:bg-[#232a44]/40 transition-colors"
-            onClick={onCollapse}
+        {/* HTML Files */}
+        <motion.div 
+          className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <div 
+            className="flex items-center px-3 py-2 cursor-pointer hover:bg-[#252b3b]/30 transition-colors bg-gradient-to-r from-[#151922]/80 to-transparent border-b border-[#374151]/30"
+            onClick={() => setShowHtml(!showHtml)}
           >
-            Collapse
-          </button>
-        </SidebarFooter>
-      )}
-    </Sidebar>
+            {showHtml ? 
+              <ChevronDown size={16} className="mr-2 text-[#9ca3af]" /> : 
+              <ChevronUp size={16} className="mr-2 text-[#9ca3af]" />
+            }
+            <Folder size={16} className="mr-2 text-[#ef4444]" />
+            <span className="text-sm font-medium text-[#e4e5e7]">HTML</span>
+          </div>
+          
+          <AnimatePresence>
+            {showHtml && (
+              <motion.div 
+                className="p-1 space-y-1"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {htmlFiles.map(fileName => renderFileItem(fileName))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* CSS Files */}
+        <motion.div 
+          className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div 
+            className="flex items-center px-3 py-2 cursor-pointer hover:bg-[#252b3b]/30 transition-colors bg-gradient-to-r from-[#151922]/80 to-transparent border-b border-[#374151]/30"
+            onClick={() => setShowCss(!showCss)}
+          >
+            {showCss ? 
+              <ChevronDown size={16} className="mr-2 text-[#9ca3af]" /> : 
+              <ChevronUp size={16} className="mr-2 text-[#9ca3af]" />
+            }
+            <Folder size={16} className="mr-2 text-[#3b82f6]" />
+            <span className="text-sm font-medium text-[#e4e5e7]">CSS</span>
+          </div>
+          
+          <AnimatePresence>
+            {showCss && (
+              <motion.div 
+                className="p-1 space-y-1"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {cssFiles.map(fileName => renderFileItem(fileName))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* JS Files */}
+        <motion.div 
+          className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <div 
+            className="flex items-center px-3 py-2 cursor-pointer hover:bg-[#252b3b]/30 transition-colors bg-gradient-to-r from-[#151922]/80 to-transparent border-b border-[#374151]/30"
+            onClick={() => setShowJs(!showJs)}
+          >
+            {showJs ? 
+              <ChevronDown size={16} className="mr-2 text-[#9ca3af]" /> : 
+              <ChevronUp size={16} className="mr-2 text-[#9ca3af]" />
+            }
+            <Folder size={16} className="mr-2 text-[#f59e0b]" />
+            <span className="text-sm font-medium text-[#e4e5e7]">JavaScript</span>
+          </div>
+          
+          <AnimatePresence>
+            {showJs && (
+              <motion.div 
+                className="p-1 space-y-1"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {jsFiles.map(fileName => renderFileItem(fileName))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Other Files */}
+        {otherFiles.length > 0 && (
+          <motion.div 
+            className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+            <div 
+              className="flex items-center px-3 py-2 cursor-pointer hover:bg-[#252b3b]/30 transition-colors bg-gradient-to-r from-[#151922]/80 to-transparent border-b border-[#374151]/30"
+              onClick={() => setShowOther(!showOther)}
+            >
+              {showOther ? 
+                <ChevronDown size={16} className="mr-2 text-[#9ca3af]" /> : 
+                <ChevronUp size={16} className="mr-2 text-[#9ca3af]" />
+              }
+              <Folder size={16} className="mr-2 text-[#9ca3af]" />
+              <span className="text-sm font-medium text-[#e4e5e7]">Other</span>
+            </div>
+            
+            <AnimatePresence>
+              {showOther && (
+                <motion.div 
+                  className="p-1 space-y-1"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {otherFiles.map(fileName => renderFileItem(fileName))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
   );
 };

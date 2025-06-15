@@ -182,7 +182,8 @@ export const EditorContainer: React.FC = () => {
   };
 
   // For split view, show tabbed editors if more than one file to display
-  const showTabbedEditors = view === "editor" && dockedFiles.length > 0;
+  const showTabbedEditors =
+    view === "split" && getDisplayFiles().length > 1;
 
   // Handle tab changes for split view
   const handleSelectTab = (fileName: string) => {
@@ -287,106 +288,75 @@ export const EditorContainer: React.FC = () => {
             display: view === 'preview' && isMobile ? 'none' : undefined 
           }}
         >
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full multi-editor-container">
             <motion.div
               className="h-full flex flex-col p-3"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              {/* EDITOR MODE: show horizontal tab bar + one editor */}
-              {showTabbedEditors && (
-                <TabbedEditors
-                  dockedFiles={dockedFiles}
-                  currentFile={currentFile}
-                  onSelectTab={handleFileSelect}
-                  onCloseTab={handleCloseTab}
-                  isFileDocked={isFileDocked}
-                  getTagColorForFile={getTagColorForFile}
-                />
-              )}
-              
-              {view === "editor" ? (
-                <motion.div 
-                  key={currentFile}
-                  className="flex-1 min-h-[300px] relative mt-2"
-                  variants={itemVariants}
-                >
-                  {/* Controls (dock/undock) */}
-                  <div className="absolute top-2 right-12 z-10 flex space-x-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className={`h-7 w-7 p-0 bg-opacity-70 hover:bg-opacity-100 ${
-                        isFileDocked(currentFile) 
-                          ? 'text-[#6366f1] bg-[#6366f1]/10' 
-                          : 'text-[#9ca3af] hover:text-[#6366f1]'
-                      } transition-all duration-300 hover:scale-110`}
-                      onClick={() => toggleDockedFile(currentFile)}
-                      title={isFileDocked(currentFile) ? "Undock file (Alt+D)" : "Dock file (Alt+D)"}
-                    >
-                      {isFileDocked(currentFile) ? <PinOff size={14} /> : <Pin size={14} />}
-                    </Button>
-                  </div>
-                  <CodeEditor 
-                    language={getCurrentFileType(currentFile)}
-                    displayName={currentFile}
-                    value={files[currentFile]?.content || ''}
-                    onChange={handleFileChange}
-                    tagColor={getTagColorForFile(currentFile).color}
-                    tagBgColor={getTagColorForFile(currentFile).bgColor}
-                    isActive={true}
-                    onSelect={() => handleFileSelect(currentFile)}
+              {/* --- New: MULTI EDITORS (stacked vertical) in split view --- */}
+              {showMultiEditors ? (
+                <div className="h-full w-full rounded-xl transition-all mb-3">
+                  <TabbedEditors
+                    dockedFiles={dockedFiles}
+                    currentFile={currentFile}
+                    files={files}
+                    onSelectTab={handleFileSelect}
+                    onCloseTab={handleCloseTab}
+                    onUndockFile={toggleDockedFile}
+                    isFileDocked={isFileDocked}
+                    getTagColorForFile={getTagColorForFile}
+                    getCurrentFileType={getCurrentFileType}
+                    handleFileChange={handleFileChange}
+                    handleFileSelect={handleFileSelect}
+                    CodeEditorComponent={CodeEditor}
+                    onReorderDockedFiles={handleReorderDockedFiles}
                   />
-                </motion.div>
-              ) : view === "split" ? (
-                <div className="flex flex-col space-y-6 mt-2">
-                  {dockedFiles.map((fileName, idx) => (
-                    <motion.div
-                      key={fileName}
-                      className={`rounded-xl shadow-inner transition-all border-2 ${fileName === currentFile ? "border-[#6366f1]" : "border-[#232a44]"} bg-gradient-to-br from-[#161c2b]/80 to-[#181d2e]/90 relative`}
-                      style={{ minHeight: 220 }}
-                      variants={itemVariants}
-                    >
-                      <div className="absolute top-2 right-12 z-10 flex space-x-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`h-7 w-7 p-0 bg-opacity-70 hover:bg-opacity-100 ${
-                            isFileDocked(fileName) 
-                              ? 'text-[#6366f1] bg-[#6366f1]/10' 
-                              : 'text-[#9ca3af] hover:text-[#6366f1]'
-                          } transition-all duration-300 hover:scale-110`}
-                          onClick={() => toggleDockedFile(fileName)}
-                          title={isFileDocked(fileName) ? "Undock file (Alt+D)" : "Dock file (Alt+D)"}
-                        >
-                          {isFileDocked(fileName) ? <PinOff size={14} /> : <Pin size={14} />}
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="ml-2 h-6 w-6 rounded-full p-0 hover:bg-red-500/20 hover:text-red-400"
-                          title="Close tab"
-                          onClick={() => handleCloseTab(fileName)}
-                          tabIndex={-1}
-                        >
-                          <X size={12} />
-                        </Button>
-                      </div>
-                      <CodeEditor
-                        language={getCurrentFileType(fileName)}
-                        displayName={fileName}
-                        value={files[fileName]?.content || ""}
-                        onChange={handleFileChange}
-                        tagColor={getTagColorForFile(fileName).color}
-                        tagBgColor={getTagColorForFile(fileName).bgColor}
-                        isActive={fileName === currentFile}
-                        onSelect={() => handleFileSelect(fileName)}
-                      />
-                    </motion.div>
-                  ))}
                 </div>
-              ) : null}
+              ) : (
+                // ... keep existing code (fallback: single editor behavior for non-split view) the same ...
+                getDisplayFiles().map((fileName, index) => (
+                  <motion.div 
+                    key={fileName} 
+                    className="flex-1 min-h-[300px] relative mb-4 last:mb-0"
+                    variants={itemVariants}
+                  >
+                    <div className="absolute top-2 right-12 z-10 flex space-x-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`h-7 w-7 p-0 bg-opacity-70 hover:bg-opacity-100 ${
+                          isFileDocked(fileName) 
+                            ? 'text-[#6366f1] bg-[#6366f1]/10' 
+                            : 'text-[#9ca3af] hover:text-[#6366f1]'
+                        } transition-all duration-300 hover:scale-110`}
+                        onClick={() => toggleDockedFile(fileName)}
+                        title={isFileDocked(fileName) ? "Undock file (Alt+D)" : "Dock file (Alt+D)"}
+                      >
+                        {isFileDocked(fileName) ? <PinOff size={14} className="pin-active" /> : <Pin size={14} />}
+                      </Button>
+                    </div>
+                    <CodeEditor 
+                      language={getCurrentFileType(fileName)}
+                      displayName={fileName}
+                      value={files[fileName]?.content || ''}
+                      onChange={(content) => {
+                        if (fileName === currentFile) {
+                          handleFileChange(content);
+                        } else {
+                          handleFileSelect(fileName);
+                          setTimeout(() => handleFileChange(content), 0);
+                        }
+                      }}
+                      tagColor={getTagColorForFile(fileName).color}
+                      tagBgColor={getTagColorForFile(fileName).bgColor}
+                      isActive={fileName === currentFile}
+                      onSelect={() => handleFileSelect(fileName)}
+                    />
+                  </motion.div>
+                ))
+              )}
 
               {/* Action buttons */}
               <motion.div 
@@ -425,6 +395,7 @@ export const EditorContainer: React.FC = () => {
           </ScrollArea>
         </ResizablePanel>
 
+        {/* Resize Handle */}
         {(view === 'split' || view === 'preview') && (
           <ResizableHandle withHandle>
             <div className="flex h-full items-center justify-center">
@@ -433,6 +404,7 @@ export const EditorContainer: React.FC = () => {
           </ResizableHandle>
         )}
 
+        {/* Preview and Backend Panel */}
         {(view === 'split' || view === 'preview') && (
           <ResizablePanel 
             defaultSize={100 - panelWidth} 
@@ -469,6 +441,7 @@ export const EditorContainer: React.FC = () => {
         )}
       </ResizablePanelGroup>
 
+      {/* AI Assistant - Now positions absolutely over other content */}
       <AnimatePresence>
         {showAiAssistant && (
           <motion.div
@@ -488,6 +461,7 @@ export const EditorContainer: React.FC = () => {
         )}
       </AnimatePresence>
       
+      {/* Keyboard shortcuts help tooltip (Desktop, closable) */}
       {showShortcutsPanel && (
         <motion.div 
           className="fixed bottom-4 left-4 rounded-md bg-[#1a1f2c]/80 backdrop-blur-sm border border-[#374151]/50 px-3 py-2 z-20 shadow-lg hidden md:block"
@@ -495,6 +469,7 @@ export const EditorContainer: React.FC = () => {
           animate={{ opacity: 0.9, y: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
         >
+          {/* Close ("X") Button */}
           <button
             aria-label="Close keyboard shortcuts"
             className="absolute top-2 right-2 p-1 rounded hover:bg-[#232a44]/80 transition-colors"
@@ -534,6 +509,7 @@ export const EditorContainer: React.FC = () => {
         </motion.div>
       )}
 
+      {/* Restore Shortcuts Floating Button */}
       {!showShortcutsPanel && (
         <button
           aria-label="Show keyboard shortcuts"

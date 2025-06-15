@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileSystemProvider } from "@/contexts/FileSystemContext";
 import { LayoutProvider } from "@/contexts/LayoutContext";
@@ -12,12 +13,8 @@ import { Code, Sparkles, Database, Layout, Palette, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  // Set state to control welcome overlay visibility
-  const [showWelcome, setShowWelcome] = useState(true);
-
   // Show welcome toast when the app loads
   useEffect(() => {
-    if (!showWelcome) return;
     const timer = setTimeout(() => {
       toast.success(
         "Welcome to CodeFusion",
@@ -26,6 +23,7 @@ const Index = () => {
           duration: 5000,
         }
       );
+      
       // Show backend feature toast with slight delay
       setTimeout(() => {
         toast.info(
@@ -37,9 +35,9 @@ const Index = () => {
         );
       }, 6000);
     }, 1500);
-
+    
     return () => clearTimeout(timer);
-  }, [showWelcome]);
+  }, []);
 
   return (
     <SettingsProvider>
@@ -55,15 +53,14 @@ const Index = () => {
             <MobileControls />
             
             <AnimatePresence>
-              {/* Only show the welcome screen if showWelcome state is true */}
-              {showWelcome && (
-                <motion.div 
-                  className="absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none"
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                >
+              <motion.div 
+                className="flex-1 p-2 md:p-3 overflow-hidden flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+              >
+                {/* Welcome section overlay on first load */}
+                <div className="absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none">
                   <motion.div 
                     className="bg-gradient-to-br from-[#1a1f2c]/90 to-[#0f172a]/90 backdrop-blur-sm border border-[#2d3748] rounded-xl shadow-2xl overflow-hidden max-w-3xl w-full pointer-events-auto"
                     initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -166,7 +163,10 @@ const Index = () => {
                             Documentation
                           </Button>
                           <Button
-                            onClick={() => setShowWelcome(false)}
+                            onClick={() => {
+                              // Close the welcome screen by hiding it
+                              document.querySelector(".absolute.inset-0.z-10")?.classList.add("hidden");
+                            }}
                             className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] hover:from-[#4f46e5] hover:to-[#7c3aed] text-white"
                           >
                             <Code size={16} className="mr-2" />
@@ -176,18 +176,10 @@ const Index = () => {
                       </div>
                     </div>
                   </motion.div>
-                </motion.div>
-              )}
+                </div>
+                <EditorContainer />
+              </motion.div>
             </AnimatePresence>
-            
-            <motion.div 
-              className="flex-1 p-2 md:p-3 overflow-hidden flex flex-col"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-            >
-              <EditorContainer />
-            </motion.div>
             
             <StatusBar />
             
