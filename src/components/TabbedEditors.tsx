@@ -21,21 +21,22 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
   getTagColorForFile,
 }) => {
   return (
-    <div className="flex items-end h-11 w-full border-b border-[#232a44] bg-[#181d2e] gap-1 overflow-x-auto px-2 py-2 custom-scrollbar">
+    <div className="flex items-end h-11 w-full border-b border-[#232a44] bg-[#181d2e] gap-1 overflow-x-auto px-2 py-2 custom-scrollbar relative">
+      {/* Bottom divider line for neatness */}
+      <div className="absolute left-0 bottom-0 w-full h-px bg-[#232a44]" />
       {dockedFiles.map((fileName) => {
         const isActive = fileName === currentFile;
         const { color, bgColor } = getTagColorForFile(fileName);
         return (
           <div
             key={fileName}
-            className={`relative flex items-center px-4 py-1.5 rounded-t-lg border-b-2 cursor-pointer transition-all duration-150
+            className={`relative flex items-center px-4 py-1.5 rounded-t-md border-b-2 cursor-pointer transition-all duration-150
               ${isActive
-                ? "bg-[#232a44] border-[#6366f1] text-[#a5b4fc] shadow-lg"
-                : "bg-transparent border-transparent text-[#9ca3af] hover:bg-[#232a44]/60"}
+                ? "border-[#6366f1] text-[#a5b4fc] bg-[#232a44] font-semibold"
+                : "border-transparent text-[#9ca3af] hover:bg-[#232a44]/60 font-normal"}
               mr-1 min-w-[102px] max-w-[182px] select-none group`}
             style={{
               fontWeight: isActive ? 600 : 400,
-              boxShadow: isActive ? "0 2px 16px #6366f15c" : undefined
             }}
             tabIndex={0}
             onClick={() => onSelectTab(fileName)}
