@@ -10,7 +10,8 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #0f1117;
+  /* More vivid overall dark gradient background */
+  background: linear-gradient(135deg, #101926 0%, #182449 55%, #4f46e5 120%);
   color: #e4e5e7;
   font-family: 'Inter', 'Poppins', sans-serif;
   overflow-x: hidden;
@@ -141,12 +142,25 @@ iframe {
 
 /* Card enhancements */
 .enhanced-card {
-  background: linear-gradient(120deg, #171a24 0%, #21283a 100%);
-  border: 1.5px solid #282b38;
-  border-radius: 0.65rem;
-  box-shadow: 0 6px 28px rgba(60, 61, 97, 0.17), 0 2px 8px rgba(0,0,0,0.09);
+  /* More striking gradient, deeper card effect, subtle border glow */
+  background: linear-gradient(110deg, #171a24 0%, #232a44 100%);
+  border: 1.5px solid #6366f1;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.20), 0 2px 12px rgba(0,0,0,0.13);
   overflow: hidden;
   transition: all 0.25s cubic-bezier(.42,0,.58,1);
+  animation: glow-card 4s ease-in-out infinite alternate;
+}
+
+@keyframes glow-card {
+  0%, 100% {
+    box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.26), 0 2px 12px rgba(0,0,0,0.13);
+    border-color: #6366f1;
+  }
+  50% {
+    box-shadow: 0 12px 50px 0 rgba(99,102,241,0.35), 0 4px 24px rgba(60,70,180,.18);
+    border-color: #a5b4fc;
+  }
 }
 
 .enhanced-card:hover {
@@ -156,26 +170,29 @@ iframe {
 
 /* Panel header enhancements */
 .preview-header, .editor-header {
-  background: linear-gradient(90deg, #161933 0%, #21243a 100%);
-  box-shadow: 0 1px 8px rgba(31, 41, 55, 0.11);
-  border-bottom: 1px solid #262a3f;
+  /* More distinct panel header coloring */
+  background: linear-gradient(90deg, #232447 0%, #353993 100%);
+  box-shadow: 0 1px 10px rgba(99, 102, 241, 0.14);
+  border-bottom: 2px solid #6366f1;
 }
 
 /* Button improvements */
 .primary-button, .btn-primary {
   background: linear-gradient(90deg, #6b59fa 10%, #4d97fa 90%);
   color: #fff;
-  box-shadow: 0 6px 16px 0 rgba(75, 81, 192, 0.19);
-  border-radius: 0.475rem;
+  box-shadow: 0 5px 16px 0 rgba(99,102,241,0.28);
+  border-radius: 0.575rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
   border: none;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1.5px 8px #6366f155;
+  transition: all 0.25s cubic-bezier(.42,0,.58,1);
 }
 
 .primary-button:hover, .btn-primary:hover {
-  background: linear-gradient(90deg, #4f46e5 10%, #3182ce 90%);
-  box-shadow: 0 8px 28px 0 rgba(91, 104, 241, 0.25);
-  transform: translateY(-1px) scale(1.04);
+  background: linear-gradient(90deg, #6366f1 15%, #7c4dff 90%);
+  transform: translateY(-2.5px) scale(1.045);
+  box-shadow: 0 10px 32px 0 rgba(91, 104, 241, 0.28);
 }
 
 .btn-secondary {
@@ -226,12 +243,13 @@ iframe {
 
 /* More elegant scrollbars */
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(120deg, #2e344b 70%, #6366f1 100%);
-  border-radius: 9px;
+  background: linear-gradient(110deg, #4f46e5 50%, #818cf8 100%);
+  border-radius: 10px;
+  border: 2px solid #232a44;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(120deg, #6366f1 0%, #6366f1 80%, #a5b4fc 100%);
+  background: linear-gradient(110deg, #6366f1 0%, #a5b4fc 100%);
 }
 
 /* Improved animation timing */

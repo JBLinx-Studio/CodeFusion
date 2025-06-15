@@ -34,12 +34,15 @@ html, body, #root {
 }
 
 body {
-  background: linear-gradient(111deg, #141726 17%, #181e2e 85%);
+  background: linear-gradient(111deg, #171931 15%, #1e2552 85%);
   color: var(--text-primary);
+  /* Add subtle grain overlay for more depth */
   background-image: 
-    radial-gradient(circle at 25% 15%, rgba(124, 77, 255, 0.15) 0%, transparent 23%),
-    radial-gradient(circle at 75% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 27%);
+    url('data:image/svg+xml;utf8,<svg width="100" height="100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="rgba(30,34,70,0.03)"/><circle cx="50" cy="50" r="1.5" fill="rgba(99,102,241,0.08)"/></svg>'),
+    radial-gradient(circle at 25% 15%, rgba(124, 77, 255, 0.10) 0%, transparent 27%),
+    radial-gradient(circle at 75% 85%, rgba(99, 102, 241, 0.10) 0%, transparent 35%);
   background-attachment: fixed;
+  background-size: cover, auto, auto;
 }
 
 /* Refine scrollbar styles for all areas */
@@ -86,9 +89,11 @@ body {
 .preview-iframe {
   height: 100% !important;
   min-height: 100% !important;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(99,102,241,0.09), 0 2px 8px rgba(0,0,0,0.13);
+  border: 2px solid #6366f1;
+  background: #101926;
+  transition: all 0.3s cubic-bezier(.42,0,.58,1);
 }
 
 /* Enhanced scrollbar for CodeEditor to handle multiple editors */
@@ -108,12 +113,13 @@ body {
 }
 
 .multi-editor-container::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
+  background: linear-gradient(110deg, #4f46e5 30%, #a5b4fc 120%);
+  border-radius: 7px;
+  border: 2px solid #232a44;
 }
 
 .multi-editor-container::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color);
+  background: linear-gradient(110deg, #6366f1 0%, #e0e7ff 100%);
 }
 
 /* Enhanced code editor transitions */
@@ -339,9 +345,9 @@ body {
 .card, 
 .glass-card, 
 .enhanced-card {
-  background: linear-gradient(110deg, #191e31 30%, #252e4e 100%);
-  box-shadow: 0 10px 36px rgba(26,30,64,0.24);
-  border: 1.5px solid #232657;
+  background: linear-gradient(120deg, #13182b 36%, #232a44 100%);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.16), 0 2px 8px rgba(0,0,0,0.11);
+  border: 2px solid #6366f1;
 }
 
 /* Selection highlights in code and form fields */
@@ -538,4 +544,3 @@ input:focus, textarea:focus, select:focus {
     @apply bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white;
   }
 }
-
