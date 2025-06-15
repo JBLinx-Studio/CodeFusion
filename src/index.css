@@ -364,27 +364,21 @@ input:focus, textarea:focus, select:focus {
 
 @layer components {
   .glassmorphism {
-    @apply bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg;
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-lg rounded-xl;
   }
   
-  .panel {
-    @apply bg-gradient-to-br from-[#151922]/90 to-[#1e293b]/90 border border-[#2d3748]/50 rounded-2xl shadow-2xl;
+  .enhanced-card {
+    @apply bg-gradient-to-tr from-[#181b31] via-[#232a5a] to-[#6366f1]/20 border-2 border-[#6366f1] rounded-xl shadow-2xl relative overflow-hidden transition-transform hover:scale-105;
   }
   
-  .button-gradient {
-    @apply bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] hover:from-[#818cf8] hover:to-[#a78bfa] text-white shadow-lg transition-all duration-300;
+  .panel-header,
+  .preview-header,
+  .editor-header {
+    @apply bg-gradient-to-r from-[#171a34] to-[#353993] border-b-2 border-[#6366f1] text-[#a5b4fc] text-lg font-semibold px-6 py-3 rounded-t-xl shadow;
   }
   
   .section-header {
-    background: linear-gradient(90deg, #222255 55%, #151922 100%);
-    color: #a5b4fc !important;
-    border-bottom: 2.5px solid #815cff !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.10em;
-    padding: 0.5em 0.75em;
-    margin-bottom: 1.4em;
-    border-radius: 0.6em 0.6em 0 0;
-    box-shadow: 0 3px 16px 0 #6b59fa22;
+    @apply border-b-2 border-[#6366f1] pb-2 mb-5 text-lg font-medium bg-gradient-to-r from-[#1c1b38] to-[#232a44] text-[#a5b4fc] tracking-wide;
   }
   
   .card {
@@ -407,7 +401,7 @@ input:focus, textarea:focus, select:focus {
   }
   
   .primary-button {
-    @apply action-button bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] hover:from-[#818cf8] hover:to-[#a78bfa] text-white shadow-md hover:shadow-lg hover:-translate-y-0.5;
+    @apply action-button bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] hover:from-[#818cf8] hover:to-[#a78bfa] text-white shadow-lg transition-all duration-300;
   }
   
   .secondary-button {
@@ -426,7 +420,7 @@ input:focus, textarea:focus, select:focus {
   
   /* Enhanced kbd style */
   .kbd {
-    @apply bg-[#151922] border border-[#2d3748] text-[#9ca3af] text-xs rounded px-1.5 py-0.5 font-mono shadow-inner;
+    @apply bg-[#1e293b] border border-[#374151] rounded text-[#9ca3af] font-mono text-xs px-1 py-0.5 mx-1;
   }
 
   /* New hover animation classes */
@@ -548,6 +542,11 @@ input:focus, textarea:focus, select:focus {
   .btn-info {
     @apply bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white;
   }
+  
+  /* Toasts */
+  .toast-notification {
+    @apply rounded-lg shadow-xl border border-white/10 p-3 bg-gradient-to-tr from-[#1e233b] via-[#30206554] to-[#232a44] text-[#e4e5e7];
+  }
 }
 
 /* Focus ring for better accessibility */
@@ -566,8 +565,8 @@ input:focus, textarea:focus, select:focus {
   animation: panelFadeIn 0.8s cubic-bezier(.29,.7,.32,1.11) 1;
 }
 @keyframes shimmer {
-  0% { left: -130%; }
-  100% { left: 100%; }
+  0% { left: -120%; }
+  100% { left: 120%; }
 }
 
 /* Stronger shadow/glow for active states */
@@ -581,4 +580,20 @@ input:focus, textarea:focus, select:focus {
   color: #a5b4fc !important;
   background: linear-gradient(90deg, #232a44 0, #232a44 100%);
   box-shadow: 0 2px 8px #a5b4fc22;
+}
+
+@keyframes bounceActive {
+  0%   { transform: scale(1.05) translateY(-3px);}
+  50%  { transform: scale(0.97) translateY(2px);}
+  100% { transform: scale(1) translateY(0);}
+}
+@keyframes glow-card {
+  0%, 100% {
+    box-shadow: 0 10px 36px 0 rgba(99, 102, 241, 0.19), 0 2px 12px rgba(0,0,0,0.13);
+    border-color: #6366f1;
+  }
+  50% {
+    box-shadow: 0 15px 54px 0 rgba(99,102,241,0.36), 0 5px 18px rgba(60,70,180,.24);
+    border-color: #a5b4fc;
+  }
 }
