@@ -34,33 +34,28 @@ html, body, #root {
 }
 
 body {
-  background-color: var(--bg-dark);
+  background: linear-gradient(111deg, #141726 17%, #181e2e 85%);
   color: var(--text-primary);
   background-image: 
-    radial-gradient(circle at 25% 25%, rgba(124, 77, 255, 0.08) 0%, transparent 20%),
-    radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.08) 0%, transparent 25%);
+    radial-gradient(circle at 25% 15%, rgba(124, 77, 255, 0.15) 0%, transparent 23%),
+    radial-gradient(circle at 75% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 27%);
   background-attachment: fixed;
 }
 
-/* Enhanced scrollbar styling */
+/* Refine scrollbar styles for all areas */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(21, 25, 34, 0.6);
-  border-radius: 8px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(55, 65, 81, 0.8);
-  border-radius: 8px;
-  border: 2px solid rgba(21, 25, 34, 0.3);
+  background: linear-gradient(120deg, #353a54 60%, #6366f1 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.7);
+  background: linear-gradient(120deg, #6366f1 0%, #a5b4fc 100%);
 }
 
 /* Ensure resizable panels take up full height */
@@ -326,6 +321,41 @@ body {
   @apply shadow-md;
 }
 
+/* Panel/Editor/Preview Panel enhanced backgrounds */
+.editor-container, .editors-panel, .preview-panel {
+  background: linear-gradient(145deg, #101324 0%, #192337 100%) !important;
+  box-shadow: 0 2px 19px 0 rgba(60,64,115,0.10) !important;
+  border-radius: 1.1rem;
+  border: 1.5px solid #292eb1;
+}
+
+.editor-wrapper, .editor-header, .preview-header {
+  box-shadow: 0 2px 10px rgba(73, 93, 143, 0.05);
+  background: linear-gradient(90deg, #1c1f34 5%, #222949 100%);
+}
+
+/* Cards and modals get more depth */
+.modal-content,
+.card, 
+.glass-card, 
+.enhanced-card {
+  background: linear-gradient(110deg, #191e31 30%, #252e4e 100%);
+  box-shadow: 0 10px 36px rgba(26,30,64,0.24);
+  border: 1.5px solid #232657;
+}
+
+/* Selection highlights in code and form fields */
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 0 2px #6366f1bb;
+}
+
+/* Panel header/section headers improved */
+.preview-title, .editor-title, .modal-header h2 {
+  color: #95a3fc !important;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 16px #6366f155;
+}
+
 @layer components {
   .glassmorphism {
     @apply bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg;
@@ -508,3 +538,4 @@ body {
     @apply bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white;
   }
 }
+
