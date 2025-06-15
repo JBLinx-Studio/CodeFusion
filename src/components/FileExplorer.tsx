@@ -307,8 +307,27 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       </div>
 
       <div className="overflow-y-auto flex-1 p-2">
-        {/* ------ Docked Files section removed COMPLETELY ------ */}
-        {/* --- File groups (HTML, CSS, JS, Other) stay the same --- */}
+        {/* Docked Files Section - New! */}
+        {dockedFiles && dockedFiles.length > 0 && (
+          <motion.div 
+            className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.0 }}
+          >
+            <div 
+              className="flex items-center px-3 py-2 cursor-pointer hover:bg-[#252b3b]/30 transition-colors bg-gradient-to-r from-[#151922]/80 to-transparent border-b border-[#374151]/30"
+            >
+              <Pin size={16} className="mr-2 text-[#6366f1]" />
+              <span className="text-sm font-medium text-[#e4e5e7]">Docked Files</span>
+            </div>
+            
+            <div className="p-1 space-y-1">
+              {dockedFiles.map(fileName => renderFileItem(fileName))}
+            </div>
+          </motion.div>
+        )}
+
         {/* HTML Files */}
         <motion.div 
           className="mb-3 rounded-lg overflow-hidden bg-[#151922]/40 border border-[#374151]/30"
