@@ -214,7 +214,7 @@ export const EditorContainer: React.FC = () => {
 
   return (
     <motion.div 
-      className="flex flex-1 overflow-hidden rounded-xl border border-[#232a44] bg-[#0c1018] h-full"
+      className="flex flex-1 overflow-hidden rounded-xl shadow-2xl border border-[#2d3748]/30 bg-gradient-to-br from-[#0c1018]/90 to-[#151d2e]/90 backdrop-blur-sm h-full"
       ref={containerRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -344,7 +344,7 @@ export const EditorContainer: React.FC = () => {
                   {dockedFiles.map((fileName, idx) => (
                     <motion.div
                       key={fileName}
-                      className={`rounded-lg border border-[#232a44] bg-gradient-to-br from-[#181d2e] to-[#151d2e] relative`}
+                      className={`rounded-xl shadow-inner transition-all border-2 ${fileName === currentFile ? "border-[#6366f1]" : "border-[#232a44]"} bg-gradient-to-br from-[#161c2b]/80 to-[#181d2e]/90 relative`}
                       style={{ minHeight: 220 }}
                       variants={itemVariants}
                     >
