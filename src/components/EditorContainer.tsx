@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { CodeEditor } from "@/components/CodeEditor";
 import { PreviewPanel } from "@/components/PreviewPanel";
@@ -9,7 +8,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useFileSystem } from '@/contexts/FileSystemContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from "sonner";
-import { GripVertical, Play, Save, Pin, PinOff, FileCode, Code, Server } from "lucide-react";
+import { GripVertical, Play, Save, Pin, PinOff, FileCode, Code, Server, X, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export const EditorContainer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showBackendPanel, setShowBackendPanel] = useState<boolean>(false);
+  const [showShortcutsPanel, setShowShortcutsPanel] = useState<boolean>(true);
   
   const {
     view,
@@ -384,42 +384,65 @@ export const EditorContainer: React.FC = () => {
         )}
       </AnimatePresence>
       
-      {/* Keyboard shortcuts help tooltip */}
-      <motion.div 
-        className="fixed bottom-4 left-4 rounded-md bg-[#1a1f2c]/80 backdrop-blur-sm border border-[#374151]/50 px-3 py-2 z-20 shadow-lg hidden md:block"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 0.9, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.3 }}
-      >
-        <div className="flex flex-col space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-[#9ca3af] font-medium">Keyboard Shortcuts</span>
-            <Code size={12} className="text-[#9ca3af]" />
+      {/* Keyboard shortcuts help tooltip (Desktop, closable) */}
+      {showShortcutsPanel && (
+        <motion.div 
+          className="fixed bottom-4 left-4 rounded-md bg-[#1a1f2c]/80 backdrop-blur-sm border border-[#374151]/50 px-3 py-2 z-20 shadow-lg hidden md:block"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 0.9, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+        >
+          {/* Close ("X") Button */}
+          <button
+            aria-label="Close keyboard shortcuts"
+            className="absolute top-2 right-2 p-1 rounded hover:bg-[#232a44]/80 transition-colors"
+            onClick={() => setShowShortcutsPanel(false)}
+            style={{ zIndex: 10 }}
+          >
+            <X size={15} className="text-[#a5b4fc]" />
+          </button>
+          <div className="flex flex-col space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] text-[#9ca3af] font-medium">Keyboard Shortcuts</span>
+              <Code size={12} className="text-[#9ca3af]" />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+              <div className="flex items-center">
+                <kbd className="kbd">Alt+1-3</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">Views</span>
+              </div>
+              <div className="flex items-center">
+                <kbd className="kbd">Alt+D</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">Dock</span>
+              </div>
+              <div className="flex items-center">
+                <kbd className="kbd">Alt+A</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">AI</span>
+              </div>
+              <div className="flex items-center">
+                <kbd className="kbd">Alt+B</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">Backend</span>
+              </div>
+              <div className="flex items-center">
+                <kbd className="kbd">Ctrl+S</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">Save</span>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            <div className="flex items-center">
-              <kbd className="kbd">Alt+1-3</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">Views</span>
-            </div>
-            <div className="flex items-center">
-              <kbd className="kbd">Alt+D</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">Dock</span>
-            </div>
-            <div className="flex items-center">
-              <kbd className="kbd">Alt+A</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">AI</span>
-            </div>
-            <div className="flex items-center">
-              <kbd className="kbd">Alt+B</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">Backend</span>
-            </div>
-            <div className="flex items-center">
-              <kbd className="kbd">Ctrl+S</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">Save</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
+
+      {/* Restore Shortcuts Floating Button */}
+      {!showShortcutsPanel && (
+        <button
+          aria-label="Show keyboard shortcuts"
+          className="fixed bottom-4 left-4 z-30 bg-[#1e293b]/70 border border-[#2d3748]/50 shadow-lg backdrop-blur-sm rounded-full p-2 hover:bg-[#374151] transition-all flex items-center md:block hidden"
+          onClick={() => setShowShortcutsPanel(true)}
+        >
+          <Keyboard size={18} className="text-[#a5b4fc]" />
+        </button>
+      )}
+
     </motion.div>
   );
 };
