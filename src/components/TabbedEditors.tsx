@@ -1,9 +1,9 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Pin, PinOff, X, File, Move } from "lucide-react";
 import { useDraggableTabs } from "./useDraggableTabs";
 
-// Props remain the same
 interface TabbedEditorsProps {
   dockedFiles: string[];
   currentFile: string;
@@ -47,90 +47,83 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-full w-full overflow-y-auto p-0.5 gap-2">
-      {dockedFiles.map((fileName, idx) => {
-        const { color } = getTagColorForFile(fileName);
-        const isActive = fileName === currentFile;
-        return (
-          <div
-            key={fileName}
-            draggable={!!onReorderDockedFiles}
-            onDragStart={() => listeners.onDragStart(idx)}
-            onDragEnd={listeners.onDragEnd}
-            onDragEnter={() => listeners.onDragEnter(idx)}
-            onDragOver={listeners.onDragOver}
-            onDrop={() => listeners.onDrop(idx)}
-            className={`
-              group flex items-center rounded-xl border border-[#232a44] bg-[#181d2e] shadow-sm mb-1 transition-all gap-2
-              ${hoverIdx === idx && draggedIdx !== null ? "ring-2 ring-[#6366f1] z-10" : ""}
-              ${draggedIdx === idx ? "opacity-60" : "opacity-100"}
-              cursor-pointer relative
-            `}
-            style={{
-              boxShadow: isActive
-                ? "0 1px 10px 0 #6366f130"
-                : "0 1px 6px 0 #232a4435",
-            }}
-          >
-            {/* Drag handle + Filename + Pin */}
-            <span className="flex items-center pl-2 pr-1 opacity-60 cursor-move select-none" title="Drag to reorder">
-              <Move size={15} />
-            </span>
+    <div className="flex flex-col h-full w-full overflow-y-auto p-0 gap-0">
+      {/* Tabs navigation/top row */}
+      <div className="flex border-b border-[#232a44] bg-[#191e30] rounded-t-lg">
+        {dockedFiles.map((fileName, idx) => {
+          const { color } = getTagColorForFile(fileName);
+          const isActive = fileName === currentFile;
+          return (
             <div
-              onClick={() => onSelectTab(fileName)}
-              className={`flex items-center pr-2 py-1 grow min-w-0 gap-2 ${
-                isActive ? "bg-[#232a44] rounded-lg" : ""
-              }`}
+              key={fileName}
+              draggable={!!onReorderDockedFiles}
+              onDragStart={() => listeners.onDragStart(idx)}
+              onDragEnd={listeners.onDragEnd}
+              onDragEnter={() => listeners.onDragEnter(idx)}
+              onDragOver={listeners.onDragOver}
+              onDrop={() => listeners.onDrop(idx)}
+              className={`
+                group flex items-center px-3 py-1.5 min-w-0 gap-2 border-r border-[#232a44] select-none relative
+                ${isActive ? "bg-[#232a44] border-b-2 border-b-[#6366f1]" : "hover:bg-[#222640]"}
+                ${draggedIdx === idx ? "opacity-60" : "opacity-100"}
+                cursor-pointer transition-all
+              `}
               style={{
                 color: isActive ? "#a5b4fc" : "#9ca3af",
                 fontWeight: isActive ? 600 : 400,
               }}
+              onClick={() => onSelectTab(fileName)}
               tabIndex={0}
             >
-              <File size={13} color={color} />
+              <span className="flex items-center opacity-40 cursor-move select-none mr-1" title="Drag to reorder">
+                <Move size={13} />
+              </span>
+              <File size={12} color={color} />
               <span className="truncate max-w-[110px]">{fileName}</span>
               {isFileDocked(fileName) && (
-                <Pin size={12} className="ml-0.5 text-[#6366f1]" />
+                <Pin size={11} className="ml-0.5 text-[#6366f1]" />
               )}
+              {/* Toolbar: Only shows on hover */}
+              <div className="flex gap-0.5 ml-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded hover:bg-[#232a44]/70 p-0.5 h-6 w-6 text-[#6366f1] hidden group-hover:flex"
+                  title="Undock file"
+                  onClick={(e) => { e.stopPropagation(); onUndockFile(fileName); }}
+                  tabIndex={-1}
+                >
+                  <PinOff size={11} />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded hover:bg-red-500/20 hover:text-red-400 p-0.5 h-6 w-6 text-[#8d97ac] hidden group-hover:flex"
+                  title="Close tab"
+                  onClick={(e) => { e.stopPropagation(); onCloseTab(fileName); }}
+                  tabIndex={-1}
+                >
+                  <X size={11} />
+                </Button>
+              </div>
             </div>
-            {/* Toolbar for each editor */}
-            <div className="flex gap-0.5 pr-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="rounded-full hover:bg-[#232a44]/80 p-0.5 h-7 w-7 text-[#6366f1] hidden group-hover:flex"
-                title="Undock file"
-                onClick={() => onUndockFile(fileName)}
-                tabIndex={-1}
-              >
-                <PinOff size={12} />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="rounded-full hover:bg-red-500/20 hover:text-red-400 p-0.5 h-7 w-7 text-[#9ca3af] hidden group-hover:flex"
-                title="Close tab"
-                onClick={() => onCloseTab(fileName)}
-                tabIndex={-1}
-              >
-                <X size={12} />
-              </Button>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
-      {/* Display ALL editors vertically stacked, each for a docked file */}
-      <div className="flex flex-col gap-6 mt-2">
+      {/* Editors stacked vertically - each like a modern card with divider */}
+      <div className="flex flex-col gap-0 w-full">
         {dockedFiles.map((fileName, idx) => (
           <div
             key={fileName}
-            className={`rounded-xl shadow-inner transition-all border-2 ${
-              fileName === currentFile
-                ? "border-[#6366f1]"
-                : "border-[#232a44]"
-            } bg-gradient-to-br from-[#161c2b]/80 to-[#181d2e]/90 relative`}
-            style={{ minHeight: 220 }}
+            className={`
+              rounded-b-lg transition-all border-x border-b
+              ${fileName === currentFile ? "border-[#6366f1] bg-[#191e30]" : "border-[#232a44] bg-[#181d2e]"}
+              relative
+              shadow-[0_1px_4px_0_rgba(30,40,70,0.07)]
+              ${idx !== 0 ? "mt-2" : ""}
+            `}
+            style={{ minHeight: 220, borderTop: "none" }}
           >
             <CodeEditorComponent
               language={getCurrentFileType(fileName)}
@@ -142,6 +135,10 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
               isActive={fileName === currentFile}
               onSelect={() => handleFileSelect(fileName)}
             />
+            {/* Subtle divider between editors */}
+            {idx < dockedFiles.length - 1 && (
+              <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#232a44] to-transparent opacity-60 mx-auto" />
+            )}
           </div>
         ))}
       </div>
