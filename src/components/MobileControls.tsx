@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useLayout } from '@/contexts/LayoutContext';
 import { 
@@ -11,7 +10,8 @@ import {
   BookOpen, 
   FileText,
   FileCog,
-  FileCode
+  FileCode,
+  X
 } from "lucide-react";
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -29,6 +29,9 @@ export const MobileControls: React.FC = () => {
   } = useLayout();
   
   const { currentFile } = useFileSystem();
+
+  // New: Track visibility of the shortcuts panel
+  const [shortcutsOpen, setShortcutsOpen] = useState(true);
 
   const containerVariants = {
     hidden: { y: -20, opacity: 0 },
@@ -248,31 +251,43 @@ export const MobileControls: React.FC = () => {
         </TooltipProvider>
       </div>
       
-      <motion.div 
-        className="mt-3 px-2"
-        variants={itemVariants}
-      >
-        <div className="flex flex-wrap items-center justify-between bg-gradient-to-r from-[#1a1f2c]/50 to-[#151922]/40 backdrop-blur-sm rounded-md px-3 py-2 border border-[#2d3748]/30 shadow-inner">
-          <div className="flex items-center gap-1.5 mb-1 md:mb-0">
-            <BookOpen size={13} className="text-[#9ca3af]" />
-            <span className="text-[11px] text-[#9ca3af] font-medium">Shortcuts</span>
+      {/* Shortcuts panel (closable) */}
+      {shortcutsOpen && (
+        <motion.div 
+          className="mt-3 px-2 relative"
+          variants={itemVariants}
+        >
+          {/* Close Button */}
+          <button
+            className="absolute top-1 right-2 p-1 rounded hover:bg-[#232a44]/80 transition-colors"
+            aria-label="Close shortcuts"
+            onClick={() => setShortcutsOpen(false)}
+            style={{ zIndex: 10 }}
+          >
+            <X size={17} className="text-[#a5b4fc]" />
+          </button>
+          <div className="flex flex-wrap items-center justify-between bg-gradient-to-r from-[#1a1f2c]/50 to-[#151922]/40 backdrop-blur-sm rounded-md px-3 py-2 border border-[#2d3748]/30 shadow-inner">
+            <div className="flex items-center gap-1.5 mb-1 md:mb-0">
+              <BookOpen size={13} className="text-[#9ca3af]" />
+              <span className="text-[11px] text-[#9ca3af] font-medium">Shortcuts</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center mb-1 md:mb-0">
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e293b] rounded border border-[#374151] text-[#9ca3af]">Alt+1-3</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">Views</span>
+              </div>
+              <div className="flex items-center mb-1 md:mb-0">
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e293b] rounded border border-[#374151] text-[#9ca3af]">Alt+D</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">Dock</span>
+              </div>
+              <div className="flex items-center">
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e293b] rounded border border-[#374151] text-[#9ca3af]">Alt+A</kbd>
+                <span className="text-[10px] text-[#9ca3af] ml-1.5">AI</span>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center mb-1 md:mb-0">
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e293b] rounded border border-[#374151] text-[#9ca3af]">Alt+1-3</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">Views</span>
-            </div>
-            <div className="flex items-center mb-1 md:mb-0">
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e293b] rounded border border-[#374151] text-[#9ca3af]">Alt+D</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">Dock</span>
-            </div>
-            <div className="flex items-center">
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e293b] rounded border border-[#374151] text-[#9ca3af]">Alt+A</kbd>
-              <span className="text-[10px] text-[#9ca3af] ml-1.5">AI</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
