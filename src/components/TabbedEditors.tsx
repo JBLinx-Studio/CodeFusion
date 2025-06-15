@@ -1,8 +1,9 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff, X, File, Move } from "lucide-react"; // Fixed import
-import { useDraggableTabs } from "./useDraggableTabs"; // Import hook
+import { Pin, PinOff, X, File, Move } from "lucide-react";
+import { useDraggableTabs } from "./useDraggableTabs";
 
+// Props remain the same
 interface TabbedEditorsProps {
   dockedFiles: string[];
   currentFile: string;
@@ -16,7 +17,7 @@ interface TabbedEditorsProps {
   handleFileChange: (content: string) => void;
   handleFileSelect: (fileName: string) => void;
   CodeEditorComponent: any;
-  onReorderDockedFiles?: (nextFiles: string[]) => void; // New, used for reordering
+  onReorderDockedFiles?: (nextFiles: string[]) => void;
 }
 
 export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
@@ -34,82 +35,70 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
   CodeEditorComponent,
   onReorderDockedFiles,
 }) => {
-  // Only show docked files as tabs in split view
-  const activeIndex = dockedFiles.indexOf(currentFile);
-  // If current file not docked, show it as an extra tab
-  const allTabs = dockedFiles.includes(currentFile)
-    ? dockedFiles
-    : [...dockedFiles, currentFile];
-
+  // Drag and drop management for vertical stack
   const {
     draggedIdx,
     hoverIdx,
     listeners,
   } = useDraggableTabs(dockedFiles, (updatedTabs) => {
-    // Optional: Only call on reorder if prop is given (just for docked files)
     if (onReorderDockedFiles) {
       onReorderDockedFiles(updatedTabs);
     }
   });
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-[#232a44] bg-[#151922]/80 px-2 py-1 rounded-t-lg max-w-full">
-        {allTabs.map((fileName, idx) => {
-          const { color } = getTagColorForFile(fileName);
-          const isActive = fileName === currentFile;
-          const dockedIdx = dockedFiles.indexOf(fileName);
-          // Show drag-n-drop for docked tabs only
-          const isDraggable = dockedIdx !== -1 && Boolean(onReorderDockedFiles);
-
-          return (
+    <div className="flex flex-col h-full w-full overflow-y-auto p-0.5 gap-2">
+      {dockedFiles.map((fileName, idx) => {
+        const { color } = getTagColorForFile(fileName);
+        const isActive = fileName === currentFile;
+        return (
+          <div
+            key={fileName}
+            draggable={!!onReorderDockedFiles}
+            onDragStart={() => listeners.onDragStart(idx)}
+            onDragEnd={listeners.onDragEnd}
+            onDragEnter={() => listeners.onDragEnter(idx)}
+            onDragOver={listeners.onDragOver}
+            onDrop={() => listeners.onDrop(idx)}
+            className={`
+              group flex items-center rounded-xl border border-[#232a44] bg-[#181d2e] shadow-sm mb-1 transition-all gap-2
+              ${hoverIdx === idx && draggedIdx !== null ? "ring-2 ring-[#6366f1] z-10" : ""}
+              ${draggedIdx === idx ? "opacity-60" : "opacity-100"}
+              cursor-pointer relative
+            `}
+            style={{
+              boxShadow: isActive
+                ? "0 1px 10px 0 #6366f130"
+                : "0 1px 6px 0 #232a4435",
+            }}
+          >
+            {/* Drag handle + Filename + Pin */}
+            <span className="flex items-center pl-2 pr-1 opacity-60 cursor-move select-none" title="Drag to reorder">
+              <Move size={15} />
+            </span>
             <div
-              key={fileName}
-              draggable={isDraggable}
-              onDragStart={() => isDraggable && listeners.onDragStart(dockedIdx)}
-              onDragEnd={isDraggable ? listeners.onDragEnd : undefined}
-              onDragEnter={isDraggable ? () => listeners.onDragEnter(dockedIdx) : undefined}
-              onDragOver={isDraggable ? listeners.onDragOver : undefined}
-              onDrop={isDraggable ? () => listeners.onDrop(dockedIdx) : undefined}
-              className={`
-                flex items-center rounded-t-md border-b-2 transition-all mr-0.5 select-none min-w-[88px] group cursor-pointer
-                ${isActive
-                  ? "bg-[#232a44] border-b-[#6366f1] shadow"
-                  : "hover:bg-[#232a44]/70 border-b-transparent"}
-                ${dockedIdx === hoverIdx && draggedIdx !== null ? "ring-2 ring-[#6366f1] z-10" : ""}
-                ${isDraggable ? "draggable-tab": ""}
-                `}
+              onClick={() => onSelectTab(fileName)}
+              className={`flex items-center pr-2 py-1 grow min-w-0 gap-2 ${
+                isActive ? "bg-[#232a44] rounded-lg" : ""
+              }`}
               style={{
-                borderColor: isActive ? "#6366f1" : "transparent",
-                opacity: draggedIdx === dockedIdx ? 0.5 : 1,
+                color: isActive ? "#a5b4fc" : "#9ca3af",
+                fontWeight: isActive ? 600 : 400,
               }}
+              tabIndex={0}
             >
-              {isDraggable && (
-                <span className="flex items-center pr-1 opacity-60 cursor-move drag-handle">
-                  {/* Drag handle icon (Move) */}
-                  <Move size={13} />
-                </span>
+              <File size={13} color={color} />
+              <span className="truncate max-w-[110px]">{fileName}</span>
+              {isFileDocked(fileName) && (
+                <Pin size={12} className="ml-0.5 text-[#6366f1]" />
               )}
-              <Button
-                size="sm"
-                variant="ghost"
-                className={`flex items-center px-2 py-1 text-xs gap-1 rounded-t-md h-8 transition-all
-                  ${isActive ? "text-[#a5b4fc]" : "text-[#9ca3af]"}
-                  ${isActive ? "font-semibold" : "font-normal"}
-                  `}
-                onClick={() => onSelectTab(fileName)}
-                style={{ background: "none", boxShadow: "none" }}
-              >
-                <File size={12} className="mr-0.5" color={color} />
-                <span className="truncate max-w-[100px]">{fileName}</span>
-                {isFileDocked(fileName) && (
-                  <Pin size={11} className="ml-0.5 text-[#6366f1]" />
-                )}
-              </Button>
+            </div>
+            {/* Toolbar for each editor */}
+            <div className="flex gap-0.5 pr-2">
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-full hover:bg-[#232a44]/70 p-0.5 h-7 w-7 ml-0.5 text-[#6366f1] hidden group-hover:flex"
+                className="rounded-full hover:bg-[#232a44]/80 p-0.5 h-7 w-7 text-[#6366f1] hidden group-hover:flex"
                 title="Undock file"
                 onClick={() => onUndockFile(fileName)}
                 tabIndex={-1}
@@ -119,7 +108,7 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-full hover:bg-red-500/20 hover:text-red-400 p-0.5 h-7 w-7 ml-0.5 text-[#9ca3af] hidden group-hover:flex"
+                className="rounded-full hover:bg-red-500/20 hover:text-red-400 p-0.5 h-7 w-7 text-[#9ca3af] hidden group-hover:flex"
                 title="Close tab"
                 onClick={() => onCloseTab(fileName)}
                 tabIndex={-1}
@@ -127,27 +116,34 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
                 <X size={12} />
               </Button>
             </div>
-          );
-        })}
-      </div>
-      <div className="flex-1 min-h-[260px] relative rounded-b-lg shadow-inner bg-gradient-to-br from-[#161c2b]/80 to-[#181d2e]/90">
-        {/* Show only the active tab's editor */}
-        {allTabs.map((fileName) =>
-          fileName === currentFile ? (
-            <div key={fileName} className="h-full w-full">
-              <CodeEditorComponent
-                language={getCurrentFileType(fileName)}
-                displayName={fileName}
-                value={files[fileName]?.content || ""}
-                onChange={handleFileChange}
-                tagColor={getTagColorForFile(fileName).color}
-                tagBgColor={getTagColorForFile(fileName).bgColor}
-                isActive={true}
-                onSelect={() => handleFileSelect(fileName)}
-              />
-            </div>
-          ) : null
-        )}
+          </div>
+        );
+      })}
+
+      {/* Display ALL editors vertically stacked, each for a docked file */}
+      <div className="flex flex-col gap-6 mt-2">
+        {dockedFiles.map((fileName, idx) => (
+          <div
+            key={fileName}
+            className={`rounded-xl shadow-inner transition-all border-2 ${
+              fileName === currentFile
+                ? "border-[#6366f1]"
+                : "border-[#232a44]"
+            } bg-gradient-to-br from-[#161c2b]/80 to-[#181d2e]/90 relative`}
+            style={{ minHeight: 220 }}
+          >
+            <CodeEditorComponent
+              language={getCurrentFileType(fileName)}
+              displayName={fileName}
+              value={files[fileName]?.content || ""}
+              onChange={handleFileChange}
+              tagColor={getTagColorForFile(fileName).color}
+              tagBgColor={getTagColorForFile(fileName).bgColor}
+              isActive={fileName === currentFile}
+              onSelect={() => handleFileSelect(fileName)}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -209,6 +209,10 @@ export const EditorContainer: React.FC = () => {
     setDockedFiles(newOrder);
   };
 
+  // --- Only relevant edited section: show the new "multi editor stacked" docked scripts panel --- //
+  // Instead of rendering editors as tabs, always show them stacked in split view
+  const showMultiEditors = view === "split" && dockedFiles.length > 0;
+
   return (
     <motion.div 
       className="flex flex-1 overflow-hidden rounded-xl shadow-2xl border border-[#2d3748]/30 bg-gradient-to-br from-[#0c1018]/90 to-[#151d2e]/90 backdrop-blur-sm h-full"
@@ -291,14 +295,14 @@ export const EditorContainer: React.FC = () => {
               initial="hidden"
               animate="visible"
             >
-              {/* --- Enhanced Editor Area (Tabbed in split view) --- */}
-              {showTabbedEditors ? (
-                <div className="h-full w-full rounded-xl bg-[#101624]/60 shadow-lg border border-[#272c43] transition-all mb-3">
+              {/* --- New: MULTI EDITORS (stacked vertical) in split view --- */}
+              {showMultiEditors ? (
+                <div className="h-full w-full rounded-xl transition-all mb-3">
                   <TabbedEditors
                     dockedFiles={dockedFiles}
-                    currentFile={selectedDockedTab}
+                    currentFile={currentFile}
                     files={files}
-                    onSelectTab={handleSelectTab}
+                    onSelectTab={handleFileSelect}
                     onCloseTab={handleCloseTab}
                     onUndockFile={toggleDockedFile}
                     isFileDocked={isFileDocked}
@@ -311,6 +315,7 @@ export const EditorContainer: React.FC = () => {
                   />
                 </div>
               ) : (
+                // ... keep existing code (fallback: single editor behavior for non-split view) the same ...
                 getDisplayFiles().map((fileName, index) => (
                   <motion.div 
                     key={fileName} 
