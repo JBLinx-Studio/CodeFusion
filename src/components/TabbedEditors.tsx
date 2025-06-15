@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff, X, File, move } from "lucide-react";
+import { Pin, PinOff, X, File, Move } from "lucide-react"; // Fixed import
 import { useDraggableTabs } from "./useDraggableTabs"; // Import hook
 
 interface TabbedEditorsProps {
@@ -87,8 +86,8 @@ export const TabbedEditors: React.FC<TabbedEditorsProps> = ({
             >
               {isDraggable && (
                 <span className="flex items-center pr-1 opacity-60 cursor-move drag-handle">
-                  {/* Drag handle icon (move) */}
-                  <move size={13} />
+                  {/* Drag handle icon (Move) */}
+                  <Move size={13} />
                 </span>
               )}
               <Button
