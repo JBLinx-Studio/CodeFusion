@@ -12,6 +12,7 @@ import { GripVertical, Play, Save, Pin, PinOff, FileCode, Code, Server, X, Keybo
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TabbedEditors } from "@/components/TabbedEditors";
 
 export const EditorContainer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,9 @@ export const EditorContainer: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isMobile, setView, currentFile, toggleDockedFile, isFileDocked, showAiAssistant, showBackendPanel]);
 
+  // New: Track selected tab in split view
+  const [selectedDockedTab, setSelectedDockedTab] = useState(currentFile);
+
   // Helper functions for conditional rendering (updated to support collapse)
   const shouldShowFileExplorer = () => {
     if (isMobile) {
@@ -174,6 +178,29 @@ export const EditorContainer: React.FC = () => {
   const itemVariants = {
     hidden: { opacity: 0, y: 15 },
     visible: { opacity: 1, y: 0 }
+  };
+
+  // For split view, show tabbed editors if more than one file to display
+  const showTabbedEditors =
+    view === "split" && getDisplayFiles().length > 1;
+
+  // Handle tab changes for split view
+  const handleSelectTab = (fileName: string) => {
+    setSelectedDockedTab(fileName);
+    handleFileSelect(fileName);
+  };
+
+  const handleCloseTab = (fileName: string) => {
+    // When a tab is closed, just undock it, unless it's the currentFile (just switch away)
+    if (isFileDocked(fileName)) {
+      toggleDockedFile(fileName);
+    }
+    // Switch to another visible tab if needed
+    if (selectedDockedTab === fileName) {
+      const otherTabs = getDisplayFiles().filter((f) => f !== fileName);
+      setSelectedDockedTab(otherTabs[0] || currentFile);
+      handleFileSelect(otherTabs[0] || currentFile);
+    }
   };
 
   return (
@@ -258,49 +285,66 @@ export const EditorContainer: React.FC = () => {
               initial="hidden"
               animate="visible"
             >
-              {getDisplayFiles().map((fileName, index) => (
-                <motion.div 
-                  key={fileName} 
-                  className="flex-1 min-h-[300px] relative mb-4 last:mb-0"
-                  variants={itemVariants}
-                >
-                  <div className="absolute top-2 right-12 z-10 flex space-x-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className={`h-7 w-7 p-0 bg-opacity-70 hover:bg-opacity-100 ${
-                        isFileDocked(fileName) 
-                          ? 'text-[#6366f1] bg-[#6366f1]/10' 
-                          : 'text-[#9ca3af] hover:text-[#6366f1]'
-                      } transition-all duration-300 hover:scale-110`}
-                      onClick={() => toggleDockedFile(fileName)}
-                      title={isFileDocked(fileName) ? "Undock file (Alt+D)" : "Dock file (Alt+D)"}
-                    >
-                      {isFileDocked(fileName) ? <PinOff size={14} className="pin-active" /> : <Pin size={14} />}
-                    </Button>
-                  </div>
-                  <CodeEditor 
-                    language={getCurrentFileType(fileName)}
-                    displayName={fileName}
-                    value={files[fileName]?.content || ''}
-                    onChange={(content) => {
-                      // Only update if this is the current file
-                      if (fileName === currentFile) {
-                        handleFileChange(content);
-                      } else {
-                        // If not current file, we need to select it first
-                        handleFileSelect(fileName);
-                        // Then update the content in the next tick
-                        setTimeout(() => handleFileChange(content), 0);
-                      }
-                    }}
-                    tagColor={getTagColorForFile(fileName).color}
-                    tagBgColor={getTagColorForFile(fileName).bgColor}
-                    isActive={fileName === currentFile}
-                    onSelect={() => handleFileSelect(fileName)}
+              {/* --- Enhanced Editor Area (Tabbed in split view) --- */}
+              {showTabbedEditors ? (
+                <div className="h-full w-full rounded-xl bg-[#101624]/60 shadow-lg border border-[#272c43] transition-all mb-3">
+                  <TabbedEditors
+                    dockedFiles={dockedFiles}
+                    currentFile={selectedDockedTab}
+                    files={files}
+                    onSelectTab={handleSelectTab}
+                    onCloseTab={handleCloseTab}
+                    onUndockFile={toggleDockedFile}
+                    isFileDocked={isFileDocked}
+                    getTagColorForFile={getTagColorForFile}
+                    getCurrentFileType={getCurrentFileType}
+                    handleFileChange={handleFileChange}
+                    handleFileSelect={handleFileSelect}
+                    CodeEditorComponent={CodeEditor}
                   />
-                </motion.div>
-              ))}
+                </div>
+              ) : (
+                getDisplayFiles().map((fileName, index) => (
+                  <motion.div 
+                    key={fileName} 
+                    className="flex-1 min-h-[300px] relative mb-4 last:mb-0"
+                    variants={itemVariants}
+                  >
+                    <div className="absolute top-2 right-12 z-10 flex space-x-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`h-7 w-7 p-0 bg-opacity-70 hover:bg-opacity-100 ${
+                          isFileDocked(fileName) 
+                            ? 'text-[#6366f1] bg-[#6366f1]/10' 
+                            : 'text-[#9ca3af] hover:text-[#6366f1]'
+                        } transition-all duration-300 hover:scale-110`}
+                        onClick={() => toggleDockedFile(fileName)}
+                        title={isFileDocked(fileName) ? "Undock file (Alt+D)" : "Dock file (Alt+D)"}
+                      >
+                        {isFileDocked(fileName) ? <PinOff size={14} className="pin-active" /> : <Pin size={14} />}
+                      </Button>
+                    </div>
+                    <CodeEditor 
+                      language={getCurrentFileType(fileName)}
+                      displayName={fileName}
+                      value={files[fileName]?.content || ''}
+                      onChange={(content) => {
+                        if (fileName === currentFile) {
+                          handleFileChange(content);
+                        } else {
+                          handleFileSelect(fileName);
+                          setTimeout(() => handleFileChange(content), 0);
+                        }
+                      }}
+                      tagColor={getTagColorForFile(fileName).color}
+                      tagBgColor={getTagColorForFile(fileName).bgColor}
+                      isActive={fileName === currentFile}
+                      onSelect={() => handleFileSelect(fileName)}
+                    />
+                  </motion.div>
+                ))
+              )}
 
               {/* Action buttons */}
               <motion.div 
